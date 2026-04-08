@@ -4,17 +4,85 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:translator/translator.dart';
+final translator = GoogleTranslator();
+final langNotifier = ValueNotifier<String>("en");
+
+Future<String> translateText(String text, String lang) async {
+  if (lang == "en") return text;
+  var translation = await translator.translate(text, to: lang);
+  return translation.text;
+}
+
+class TranslatedText extends StatefulWidget {
+  final String text;
+  final TextStyle? style;
+  const TranslatedText(this.text, {this.style});
+
+  @override
+  _TranslatedTextState createState() => _TranslatedTextState();
+}
+
+class _TranslatedTextState extends State<TranslatedText> {
+  late Future<String> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = translateText(widget.text, langNotifier.value);
+    langNotifier.addListener(_onLangChanged);
+  }
+
+  void _onLangChanged() {
+    setState(() {
+      _future = translateText(widget.text, langNotifier.value);
+    });
+  }
+
+  @override
+  void dispose() {
+    langNotifier.removeListener(_onLangChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String>(
+      future: _future,
+      builder: (context, snapshot) {
+        return Text(snapshot.data ?? widget.text, style: widget.style);
+      },
+    );
+  }
+}
 void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  static _MyAppState? of(BuildContext context) =>
+      context.findAncestorStateOfType<_MyAppState>();
+
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  void changeLang() {
+    if (langNotifier.value == "en") {
+      langNotifier.value = "fr";
+    } else if (langNotifier.value == "fr") {
+      langNotifier.value = "ar";
+    } else {
+      langNotifier.value = "en";
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Spare Parts App',
-      // home: HomePage(),
       home: LoginPage(),
       theme: ThemeData(
         primaryColor: Colors.blue,
@@ -48,40 +116,50 @@ class LoginPage extends StatelessWidget {
           children: [
             Icon(Icons.lock, size: 80, color: Colors.blue),
             SizedBox(height: 20),
-
-            Text(
-              "Login",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
+            TranslatedText("Login",
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
             SizedBox(height: 30),
-
-            TextField(
-              controller: emailController,
-              decoration: InputDecoration(
-                labelText: "Email",
-                border: OutlineInputBorder(),
+            ValueListenableBuilder<String>(
+              valueListenable: langNotifier,
+              builder: (_, lang, __) => TextField(
+                controller: emailController,
+                decoration: InputDecoration(
+                  labelText: lang == "fr" ? "E-mail" : lang == "ar" ? "البريد الإلكتروني" : "Email",
+                  border: OutlineInputBorder(),
+                ),
               ),
             ),
             SizedBox(height: 20),
-
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: "Password",
-                border: OutlineInputBorder(),
+            ValueListenableBuilder<String>(
+              valueListenable: langNotifier,
+              builder: (_, lang, __) => TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: lang == "fr" ? "Mot de passe" : lang == "ar" ? "كلمة المرور" : "Password",
+                  border: OutlineInputBorder(),
+                ),
               ),
             ),
             SizedBox(height: 30),
-
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  createRoute(HomePage()),
+              onPressed: () async {
+                var result = await login(
+                  emailController.text,
+                  passwordController.text,
                 );
+                if (result["success"] == true) {
+                  Navigator.push(
+                    context,
+                    createRoute(HomePage(role: result["role"], token: result["token"])),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: TranslatedText("Login failed")),
+                  );
+                }
               },
-              child: Text("Login"),
+              child: TranslatedText("Login"),
             )
           ],
         ),
@@ -91,8 +169,11 @@ class LoginPage extends StatelessWidget {
 }
 
 class HomePage extends StatefulWidget {
+  final String role;
+  final String token;
+  HomePage({required this.role, required this.token});
   @override
-  _HomePageState createState() => _HomePageState();
+  _HomePageState createState() => _HomePageState(); 
 }
 
 class _HomePageState extends State<HomePage> {
@@ -109,7 +190,7 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _loadStats() async {
     try {
-      final parts = await fetchParts();
+      final parts = await fetchParts(widget.token);
       setState(() {
         totalParts = parts.length;
         lowStockCount = parts.where((p) => (p["quantity"] ?? 0) <= 5).length;
@@ -143,19 +224,32 @@ class _HomePageState extends State<HomePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text("Welcome back 👋",
+                    TranslatedText("Welcome back 👋",
                         style: TextStyle(color: Colors.white70, fontSize: 14)),
-                    Icon(Icons.notifications_none, color: Colors.white),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.language, color: Colors.white),
+                          onPressed: () => MyApp.of(context)?.changeLang(),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.logout, color: Colors.white),
+                          onPressed: () => Navigator.pushAndRemoveUntil(
+                            context,
+                            createRoute(LoginPage()),
+                            (route) => false,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
                 SizedBox(height: 6),
-                Text(
-                  "Spare Parts Manager",
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold),
-                ),
+                TranslatedText("Spare Parts Manager",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold)),
                 SizedBox(height: 20),
                 loading
                     ? Center(child: CircularProgressIndicator(color: Colors.white))
@@ -166,6 +260,7 @@ class _HomePageState extends State<HomePage> {
                           _statCard("Scanned", "$scannedCount", Icons.qr_code_scanner),
                           SizedBox(width: 12),
                           _statCard("Low Stock", "$lowStockCount", Icons.warning_amber_outlined),
+
                         ],
                       ),
               ],
@@ -177,7 +272,7 @@ class _HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Quick Actions",
+                TranslatedText("Quick Actions",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 SizedBox(height: 16),
                 _actionCard(
@@ -189,14 +284,15 @@ class _HomePageState extends State<HomePage> {
                   onTap: () => Navigator.push(context, createRoute(ScanPage())),
                 ),
                 SizedBox(height: 12),
-                _actionCard(
-                  context,
-                  icon: Icons.list_alt,
-                  title: "View Spare Parts",
-                  subtitle: "Browse and search all parts",
-                  color: Color(0xFF00897B),
-                  onTap: () => Navigator.push(context, createRoute(ListPage())),
-                ),
+                if (widget.role == "admin")
+                  _actionCard(
+                    context,
+                    icon: Icons.list_alt,
+                    title: "View Spare Parts",
+                    subtitle: "Browse and search all parts",
+                    color: Color(0xFF00897B),
+                    onTap: () => Navigator.push(context, createRoute(ListPage(token: widget.token))),
+                  ),
               ],
             ),
           ),
@@ -222,7 +318,7 @@ class _HomePageState extends State<HomePage> {
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: 16)),
-            Text(label, style: TextStyle(color: Colors.white70, fontSize: 11)),
+            TranslatedText(label, style: TextStyle(color: Colors.white70, fontSize: 11)),
           ],
         ),
       ),
@@ -264,11 +360,11 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
+                  TranslatedText(title,
                       style: TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 15)),
                   SizedBox(height: 4),
-                  Text(subtitle,
+                  TranslatedText(subtitle,
                       style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                 ],
               ),
@@ -322,13 +418,18 @@ class _ScanPageState extends State<ScanPage> {
                   child: Icon(Icons.arrow_back_ios, color: Colors.white),
                 ),
                 SizedBox(height: 20),
-                Text("Scan a Part",
+                // Text("Scan a Part",
+                //     style: TextStyle(
+                //         color: Colors.white,
+                //         fontSize: 26,
+                //         fontWeight: FontWeight.bold))
+                TranslatedText("Scan Piece",
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 26,
                         fontWeight: FontWeight.bold)),
                 SizedBox(height: 6),
-                Text("Use your camera or gallery to identify a spare part",
+                TranslatedText("Use your camera or gallery to identify a spare part",
                     style: TextStyle(color: Colors.white70, fontSize: 13)),
               ],
             ),
@@ -405,11 +506,11 @@ class _ScanPageState extends State<ScanPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
+                  TranslatedText(title,
                       style: TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 15)),
                   SizedBox(height: 3),
-                  Text(subtitle,
+                  TranslatedText(subtitle,
                       style: TextStyle(color: Colors.grey[600], fontSize: 12)),
                 ],
               ),
@@ -436,7 +537,7 @@ class ResultPage extends StatelessWidget {
         children: [
           Container(
             width: double.infinity,
-            padding: EdgeInsets.fromLTRB(24, 60, 24, 36),
+            padding: EdgeInsets.fromLTRB(24, 60, 24, 24),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [Color(0xFF1565C0), Color(0xFF42A5F5)],
@@ -452,18 +553,49 @@ class ResultPage extends StatelessWidget {
                   onTap: () => Navigator.pop(context),
                   child: Icon(Icons.arrow_back_ios, color: Colors.white),
                 ),
-                SizedBox(height: 20),
-                Text("Part Details",
+                SizedBox(height: 16),
+                TranslatedText("Part Details",
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 26,
                         fontWeight: FontWeight.bold)),
-                SizedBox(height: 6),
-                Text("Identified spare part information",
+                SizedBox(height: 4),
+                TranslatedText("Identified spare part information",
                     style: TextStyle(color: Colors.white70, fontSize: 13)),
               ],
             ),
           ),
+          if (["image1", "image2", "image3"].any((k) => data[k] != null))
+            Padding(
+              padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: SizedBox(
+                height: 110,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: ["image1", "image2", "image3"]
+                      .where((k) => data[k] != null)
+                      .map((k) => Container(
+                            margin: EdgeInsets.only(right: 10),
+                            width: 110,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              color: Colors.grey[200],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                "http://10.0.2.2:3000/uploads/${data[k]}",
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Icon(
+                                    Icons.broken_image,
+                                    color: Colors.grey),
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                ),
+              ),
+            ),
           Expanded(
             child: SingleChildScrollView(
               padding: EdgeInsets.all(20),
@@ -481,15 +613,7 @@ class ResultPage extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        if (data["image"] != null)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(data["image"],
-                                height: 140, fit: BoxFit.contain),
-                          ),
-                        SizedBox(height: 20),
-                        _infoTile(Icons.build_outlined, "Part Name", data["piece"] ?? "-"),
-                        Divider(height: 1),
+                        SizedBox(height: 8),
                         _infoTile(Icons.tag, "Reference", data["reference"] ?? "-"),
                         Divider(height: 1),
                         _infoTile(Icons.location_on_outlined, "Location", data["location"] ?? "-"),
@@ -506,7 +630,7 @@ class ResultPage extends StatelessWidget {
                                   : Colors.green.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Text(
+                            child: TranslatedText(
                               lowStock ? "Low Stock" : "In Stock",
                               style: TextStyle(
                                 color: lowStock ? Colors.red : Colors.green,
@@ -546,7 +670,7 @@ class ResultPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
+                TranslatedText(label,
                     style: TextStyle(color: Colors.grey[500], fontSize: 11)),
                 SizedBox(height: 2),
                 Text(value,
@@ -653,8 +777,7 @@ class _LoadingPageState extends State<LoadingPage> {
                 ),
               ),
               SizedBox(height: 32),
-              Text(
-                "Analyzing Part...",
+              TranslatedText("Analyzing Part...",
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 20,
@@ -662,8 +785,7 @@ class _LoadingPageState extends State<LoadingPage> {
                 ),
               ),
               SizedBox(height: 10),
-              Text(
-                "Please wait while we identify your part",
+              TranslatedText("Please wait while we identify your part",
                 style: TextStyle(color: Colors.white70, fontSize: 13),
               ),
             ],
@@ -674,6 +796,8 @@ class _LoadingPageState extends State<LoadingPage> {
   }
 }
 class ListPage extends StatefulWidget {
+  final String token;
+  ListPage({required this.token});
   @override
   _ListPageState createState() => _ListPageState();
 }
@@ -690,7 +814,7 @@ class _ListPageState extends State<ListPage> {
   }
 
   Future<void> loadParts() async {
-    List data = await fetchParts();
+    List data = await fetchParts(widget.token);
     setState(() {
       allParts = data;
       filteredList = data;
@@ -698,9 +822,235 @@ class _ListPageState extends State<ListPage> {
     });
   }
 
+  Future<void> _deletePart(int id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: TranslatedText("Delete Part"),
+        content: TranslatedText("Are you sure you want to delete this part?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: TranslatedText("Cancel")),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(context, true),
+            child: TranslatedText("Delete"),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await http.delete(
+      Uri.parse("http://10.0.2.2:3000/api/parts/$id"),
+      headers: {"Authorization": "Bearer ${widget.token}"},
+    );
+    setState(() {
+      allParts.removeWhere((p) => p["id"] == id);
+      filteredList.removeWhere((p) => p["id"] == id);
+    });
+  }
+
+  void _showAddDialog() {
+    final refCtrl = TextEditingController();
+    final locCtrl = TextEditingController();
+    final qtyCtrl = TextEditingController();
+    final List<File?> images = [null, null, null];
+    final picker = ImagePicker();
+
+    showDialog(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setStateDialog) => AlertDialog(
+          title: TranslatedText("Add Part"),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ValueListenableBuilder<String>(
+                  valueListenable: langNotifier,
+                  builder: (_, lang, __) => Column(
+                    children: [
+                      TextField(controller: refCtrl, decoration: InputDecoration(labelText: lang == "fr" ? "Référence" : lang == "ar" ? "المرجع" : "Reference")),
+                      SizedBox(height: 8),
+                      TextField(controller: locCtrl, decoration: InputDecoration(labelText: lang == "fr" ? "Emplacement" : lang == "ar" ? "الموقع" : "Location")),
+                      SizedBox(height: 8),
+                      TextField(controller: qtyCtrl, decoration: InputDecoration(labelText: lang == "fr" ? "Quantité" : lang == "ar" ? "الكمية" : "Quantity"), keyboardType: TextInputType.number),
+                    ],
+                  ),
+                ),
+                SizedBox(height: 16),
+                TranslatedText("Photos", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: List.generate(3, (i) => GestureDetector(
+                    onTap: () async {
+                      final picked = await picker.pickImage(source: ImageSource.gallery);
+                      if (picked != null) setStateDialog(() => images[i] = File(picked.path));
+                    },
+                    child: Container(
+                      width: 75,
+                      height: 75,
+                      decoration: BoxDecoration(
+                        color: Color(0xFF1565C0).withOpacity(0.07),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Color(0xFF1565C0).withOpacity(0.3)),
+                        image: images[i] != null
+                            ? DecorationImage(image: FileImage(images[i]!), fit: BoxFit.cover)
+                            : null,
+                      ),
+                      child: images[i] == null
+                          ? Icon(Icons.add_a_photo_outlined, color: Color(0xFF1565C0), size: 28)
+                          : null,
+                    ),
+                  )),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: TranslatedText("Cancel")),
+            ElevatedButton(
+              onPressed: () async {
+                final uri = Uri.parse("http://10.0.2.2:3000/api/parts");
+                final request = http.MultipartRequest("POST", uri)
+                  ..headers["Authorization"] = "Bearer ${widget.token}"
+                  ..fields["reference"] = refCtrl.text
+                  ..fields["location"] = locCtrl.text
+                  ..fields["quantity"] = qtyCtrl.text;
+                for (int i = 0; i < 3; i++) {
+                  if (images[i] != null) {
+                    request.files.add(await http.MultipartFile.fromPath("image${i + 1}", images[i]!.path));
+                  }
+                }
+                await request.send();
+                Navigator.pop(context);
+                loadParts();
+              },
+              child: TranslatedText("Add"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _iconBtn(IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: EdgeInsets.all(6),
+        child: Icon(icon, color: color, size: 20),
+      ),
+    );
+  }
+
+  void _showTakeDialog(Map item) {
+    final qtyCtrl = TextEditingController();
+    final int available = item["quantity"] ?? 0;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: TranslatedText("Take Parts"),
+        content: ValueListenableBuilder<String>(
+          valueListenable: langNotifier,
+          builder: (_, lang, __) => TextField(
+            controller: qtyCtrl,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: lang == "fr" ? "Quantité à prendre" : lang == "ar" ? "الكمية المأخوذة" : "Quantity to take",
+              helperText: lang == "fr" ? "Disponible: $available" : lang == "ar" ? "المتاح: $available" : "Available: $available",
+              border: OutlineInputBorder(),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: TranslatedText("Cancel")),
+          ElevatedButton(
+            onPressed: () async {
+              final take = int.tryParse(qtyCtrl.text) ?? 0;
+              if (take <= 0 || take > available) return;
+              final newQty = available - take;
+              final res = await http.put(
+                Uri.parse("http://10.0.2.2:3000/api/parts/${item["id"]}"),
+                headers: {
+                  "Authorization": "Bearer ${widget.token}",
+                  "Content-Type": "application/json",
+                },
+                body: jsonEncode({
+                  "reference": item["reference"],
+                  "location": item["location"],
+                  "quantity": newQty,
+                }),
+              );
+              if (res.statusCode == 200) {
+                Navigator.pop(context);
+                loadParts();
+              }
+            },
+            child: TranslatedText("Confirm"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditDialog(Map item) {
+    final refCtrl = TextEditingController(text: item["reference"] ?? "");
+    final locCtrl = TextEditingController(text: item["location"] ?? "");
+    final qtyCtrl = TextEditingController(text: item["quantity"].toString());
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: TranslatedText("Edit Part"),
+        content: ValueListenableBuilder<String>(
+          valueListenable: langNotifier,
+          builder: (_, lang, __) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(controller: refCtrl, decoration: InputDecoration(labelText: lang == "fr" ? "Référence" : lang == "ar" ? "المرجع" : "Reference")),
+              TextField(controller: locCtrl, decoration: InputDecoration(labelText: lang == "fr" ? "Emplacement" : lang == "ar" ? "الموقع" : "Location")),
+              TextField(controller: qtyCtrl, decoration: InputDecoration(labelText: lang == "fr" ? "Quantité" : lang == "ar" ? "الكمية" : "Quantity"), keyboardType: TextInputType.number),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: TranslatedText("Cancel")),
+          ElevatedButton(
+            onPressed: () async {
+              final res = await http.put(
+                Uri.parse("http://10.0.2.2:3000/api/parts/${item["id"]}"),
+                headers: {
+                  "Authorization": "Bearer ${widget.token}",
+                  "Content-Type": "application/json",
+                },
+                body: jsonEncode({
+                  "reference": refCtrl.text,
+                  "location": locCtrl.text,
+                  "quantity": int.tryParse(qtyCtrl.text) ?? 0,
+                }),
+              );
+              if (res.statusCode == 200) {
+                Navigator.pop(context);
+                loadParts();
+              }
+            },
+            child: TranslatedText("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showAddDialog,
+        backgroundColor: Color(0xFF1565C0),
+        child: Icon(Icons.add, color: Colors.white),
+      ),
       body: Column(
         children: [
           Container(
@@ -722,13 +1072,13 @@ class _ListPageState extends State<ListPage> {
                   child: Icon(Icons.arrow_back_ios, color: Colors.white),
                 ),
                 SizedBox(height: 16),
-                Text("Spare Parts",
+                TranslatedText("Spare Parts",
                     style: TextStyle(
                         color: Colors.white,
                         fontSize: 26,
                         fontWeight: FontWeight.bold)),
                 SizedBox(height: 4),
-                Text("${allParts.length} parts available",
+                TranslatedText("${allParts.length} parts available",
                     style: TextStyle(color: Colors.white70, fontSize: 13)),
                 SizedBox(height: 16),
                 Container(
@@ -736,9 +1086,11 @@ class _ListPageState extends State<ListPage> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: TextField(
+                  child: ValueListenableBuilder<String>(
+                    valueListenable: langNotifier,
+                    builder: (_, lang, __) => TextField(
                     decoration: InputDecoration(
-                      hintText: "Search parts...",
+                      hintText: lang == "fr" ? "Rechercher..." : lang == "ar" ? "بحث..." : "Search parts...",
                       hintStyle: TextStyle(color: Colors.grey[400]),
                       prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
                       border: InputBorder.none,
@@ -747,12 +1099,13 @@ class _ListPageState extends State<ListPage> {
                     onChanged: (value) {
                       setState(() {
                         filteredList = allParts.where((item) {
-                          return item["piece"]
+                          return (item["reference"] ?? "")
                               .toLowerCase()
                               .contains(value.toLowerCase());
                         }).toList();
                       });
                     },
+                  ),
                   ),
                 ),
               ],
@@ -770,7 +1123,7 @@ class _ListPageState extends State<ListPage> {
                             Icon(Icons.search_off,
                                 size: 60, color: Colors.grey[300]),
                             SizedBox(height: 12),
-                            Text("No parts found",
+                            TranslatedText("No parts found",
                                 style: TextStyle(
                                     color: Colors.grey[400], fontSize: 15)),
                           ],
@@ -784,9 +1137,20 @@ class _ListPageState extends State<ListPage> {
                           final int qty = item["quantity"] ?? 0;
                           final bool lowStock = qty <= 5;
 
-                          return GestureDetector(
-                            onTap: () => Navigator.push(
-                                context, createRoute(ResultPage(data: item))),
+                          return Dismissible(
+                            key: Key(item["id"].toString()),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: EdgeInsets.only(right: 20),
+                              margin: EdgeInsets.only(bottom: 12),
+                              decoration: BoxDecoration(
+                                color: Colors.red,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Icon(Icons.delete, color: Colors.white),
+                            ),
+                            onDismissed: (_) => _deletePart(item["id"]),
                             child: Container(
                               margin: EdgeInsets.only(bottom: 12),
                               padding: EdgeInsets.all(16),
@@ -800,70 +1164,66 @@ class _ListPageState extends State<ListPage> {
                                       offset: Offset(0, 2))
                                 ],
                               ),
-                              child: Row(
+                              child: Column(
                                 children: [
-                                  Container(
-                                    padding: EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          Color(0xFF1565C0).withOpacity(0.08),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Icon(Icons.build_outlined,
-                                        color: Color(0xFF1565C0), size: 22),
-                                  ),
-                                  SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(item["piece"] ?? "-",
-                                            style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14)),
-                                        SizedBox(height: 4),
-                                        Text(item["reference"] ?? "-",
-                                            style: TextStyle(
-                                                color: Colors.grey[500],
-                                                fontSize: 12)),
-                                      ],
-                                    ),
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                  Row(
                                     children: [
                                       Container(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 8, vertical: 3),
+                                        padding: EdgeInsets.all(10),
+                                        decoration: BoxDecoration(
+                                          color: Color(0xFF1565C0).withOpacity(0.08),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Icon(Icons.build_outlined,
+                                            color: Color(0xFF1565C0), size: 22),
+                                      ),
+                                      SizedBox(width: 14),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(item["reference"] ?? "-",
+                                                style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14)),
+                                            SizedBox(height: 4),
+                                            Text(item["location"] ?? "-",
+                                                style: TextStyle(
+                                                    color: Colors.grey[500],
+                                                    fontSize: 12)),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                         decoration: BoxDecoration(
                                           color: lowStock
                                               ? Colors.red.withOpacity(0.1)
                                               : Colors.green.withOpacity(0.1),
-                                          borderRadius:
-                                              BorderRadius.circular(20),
+                                          borderRadius: BorderRadius.circular(20),
                                         ),
-                                        child: Text(
+                                        child: TranslatedText(
                                           lowStock ? "Low" : "OK",
                                           style: TextStyle(
-                                            color: lowStock
-                                                ? Colors.red
-                                                : Colors.green,
+                                            color: lowStock ? Colors.red : Colors.green,
                                             fontSize: 11,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                       ),
-                                      SizedBox(height: 4),
-                                      Text("Qty: $qty",
-                                          style: TextStyle(
-                                              color: Colors.grey[500],
-                                              fontSize: 11)),
                                     ],
                                   ),
-                                  SizedBox(width: 8),
-                                  Icon(Icons.arrow_forward_ios,
-                                      size: 14, color: Colors.grey),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      _iconBtn(Icons.remove_circle_outline, Colors.orange, () => _showTakeDialog(item)),
+                                      _iconBtn(Icons.visibility_outlined, Color(0xFF1565C0), () {
+                                        Navigator.push(context, createRoute(ResultPage(data: item)));
+                                      }),
+                                      _iconBtn(Icons.edit_outlined, Color(0xFF00897B), () => _showEditDialog(item)),
+                                      _iconBtn(Icons.delete_outline, Colors.red, () => _deletePart(item["id"])),
+                                    ],
+                                  ),
                                 ],
                               ),
                             ),
@@ -878,15 +1238,29 @@ class _ListPageState extends State<ListPage> {
 }
 
 //récupération des données depuis le backend
-Future<List> fetchParts() async {
-  final response =
-      await http.get(Uri.parse("http://192.168.100.7:3000/api/parts")); // ipconfig for PC's IPv4
-      // await http.get(Uri.parse("http://10.0.2.2:3000/api/parts"));
-      
+Future<List> fetchParts(String token) async {
+  final response = await http.get(
+    Uri.parse("http://10.0.2.2:3000/api/parts"),
+    headers: {"Authorization": "Bearer $token"},
+  );
 
   if (response.statusCode == 200) {
     return json.decode(response.body);
   } else {
     throw Exception("Failed to load data");
   }
+}
+
+//Login function
+Future<Map<String, dynamic>> login(String email, String password) async {
+  final response = await http.post(
+    Uri.parse("http://10.0.2.2:3000/api/login"),
+    headers: {"Content-Type": "application/json"},
+    body: jsonEncode({
+      "email": email,
+      "password": password,
+    }),
+  );
+
+  return jsonDecode(response.body);
 }
