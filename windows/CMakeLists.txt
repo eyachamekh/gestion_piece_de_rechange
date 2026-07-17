@@ -106,3 +106,14 @@ install(DIRECTORY "${PROJECT_BUILD_DIR}/${FLUTTER_ASSET_DIR_NAME}"
 install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_DATA_DIR}"
   CONFIGURATIONS Profile;Release
   COMPONENT Runtime)
+
+# TensorFlow Lite C API (required by tflite_flutter on Windows).
+set(TFLITE_WIN_DLL "${PROJECT_BUILD_DIR}/../blobs/libtensorflowlite_c-win.dll")
+if(NOT EXISTS "${TFLITE_WIN_DLL}")
+  message(FATAL_ERROR
+    "Missing ${TFLITE_WIN_DLL}. Run: .\\scripts\\setup_tflite_windows.ps1")
+endif()
+install(
+  FILES "${TFLITE_WIN_DLL}"
+  DESTINATION "${INSTALL_BUNDLE_DATA_DIR}/../blobs/"
+  COMPONENT Runtime)

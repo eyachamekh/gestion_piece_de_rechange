@@ -37,8 +37,13 @@ dependencies:
   image_picker: ^1.2.1
   http: ^1.6.0
   translator: ^1.0.4+1
+  file_picker: ^10.3.2
   excel: ^4.0.6
   path_provider: ^2.1.5
+  shared_preferences: ^2.3.0
+  share_plus: ^10.1.4
+  tflite_flutter: ^0.11.0
+  image: ^4.3.0
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +63,8 @@ dev_dependencies:
 flutter:
   assets:
     - assets/images/
+    - assets/ml/
+    - assets/data/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

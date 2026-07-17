@@ -7,15 +7,20 @@ Future<String> exportToExcel(List<Map<String, dynamic>> data) async {
   Sheet sheet = excel['Sheet1'];
 
   // Header
-  sheet.appendRow(["Part", "Quantity", "Quantity Out", "Date"]);
+  sheet.appendRow([
+    TextCellValue("Part"),
+    TextCellValue("Quantity"),
+    TextCellValue("Quantity Out"),
+    TextCellValue("Date"),
+  ]);
 
   // Data
   for (var item in data) {
     sheet.appendRow([
-      item["part"],
-      item["quantity"],
-      item["quantityOut"],
-      item["date"],
+      TextCellValue(item["part"]?.toString() ?? ""),
+      TextCellValue(item["quantity"]?.toString() ?? ""),
+      TextCellValue(item["quantityOut"]?.toString() ?? ""),
+      TextCellValue(item["date"]?.toString() ?? ""),
     ]);
   }
 

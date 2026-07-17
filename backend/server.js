@@ -29,7 +29,7 @@ const db = mysql.createConnection({
   database: "piece_de_rechange",
 });
 
-// 🔐 LOGIN WITH JWT
+// LOGIN WITH JWT
 app.post("/api/login", (req, res) => {
   const { email, password } = req.body;
   db.query(
@@ -38,13 +38,13 @@ app.post("/api/login", (req, res) => {
     (err, results) => {
       if (err || !results || results.length === 0) return res.status(401).json({ success: false });
       const user = results[0];
-      const token = jwt.sign({ id: user.id, role: user.role }, SECRET, { expiresIn: "1h" });
+      const token = jwt.sign({ id: user.id, role: user.role }, SECRET, { expiresIn: "24h" });
       res.json({ success: true, token, role: user.role });
     }
   );
 });
 
-// 🔒 Middleware
+//  Middleware
 function verifyToken(req, res, next) {
   const header = req.headers["authorization"];
   if (!header) return res.sendStatus(403);
@@ -56,27 +56,28 @@ function verifyToken(req, res, next) {
   });
 }
 
-// 📦 GET PARTS
+//  GET PARTS
 app.get("/api/parts", verifyToken, (req, res) => {
   db.query("SELECT * FROM parts", (err, results) => {
     res.json(results);
   });
 });
 
-// ➕ ADD PART (with 3 images)
+// ADD PART (with 3 images & embeddings)
 app.post("/api/parts", verifyToken, upload.fields([
   { name: "image1", maxCount: 1 },
   { name: "image2", maxCount: 1 },
   { name: "image3", maxCount: 1 },
 ]), (req, res) => {
-  const { reference, location, quantity } = req.body;
+  const { reference, location, quantity, embedding1, embedding2, embedding3 } = req.body;
   const files = req.files || {};
   const image1 = files["image1"] ? files["image1"][0].filename : null;
   const image2 = files["image2"] ? files["image2"][0].filename : null;
   const image3 = files["image3"] ? files["image3"][0].filename : null;
+  const created_at = new Date().toISOString().slice(0, 19).replace("T", " ");
   db.query(
-    "INSERT INTO parts (reference, location, quantity, image1, image2, image3) VALUES (?, ?, ?, ?, ?, ?)",
-    [reference, location, quantity, image1, image2, image3],
+    "INSERT INTO parts (reference, location, quantity, image1, image2, image3, embedding1, embedding2, embedding3, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [reference, location, quantity, image1, image2, image3, embedding1 || null, embedding2 || null, embedding3 || null, created_at],
     (err, result) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true, id: result.insertId });
@@ -84,12 +85,30 @@ app.post("/api/parts", verifyToken, upload.fields([
   );
 });
 
-// ✏️ UPDATE PART
-app.put("/api/parts/:id", verifyToken, (req, res) => {
-  const { reference, location, quantity } = req.body;
+//  UPDATE PART (supports optional image uploads)
+app.put("/api/parts/:id", verifyToken, upload.fields([
+  { name: "image1", maxCount: 1 },
+  { name: "image2", maxCount: 1 },
+  { name: "image3", maxCount: 1 },
+]), (req, res) => {
+  const { reference, location, quantity, embedding1, embedding2, embedding3 } = req.body;
+  const files = req.files || {};
+
+  // Build dynamic SET clause — only update image/embedding fields if new files were uploaded
+  const fields = ["reference=?", "location=?", "quantity=?"];
+  const values = [reference, location, quantity];
+
+  if (files["image1"]) { fields.push("image1=?"); values.push(files["image1"][0].filename); }
+  if (files["image2"]) { fields.push("image2=?"); values.push(files["image2"][0].filename); }
+  if (files["image3"]) { fields.push("image3=?"); values.push(files["image3"][0].filename); }
+  if (embedding1)      { fields.push("embedding1=?"); values.push(embedding1); }
+  if (embedding2)      { fields.push("embedding2=?"); values.push(embedding2); }
+  if (embedding3)      { fields.push("embedding3=?"); values.push(embedding3); }
+
+  values.push(req.params.id);
   db.query(
-    "UPDATE parts SET reference=?, location=?, quantity=? WHERE id=?",
-    [reference, location, quantity, req.params.id],
+    `UPDATE parts SET ${fields.join(", ")} WHERE id=?`,
+    values,
     (err) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true });
@@ -97,7 +116,7 @@ app.put("/api/parts/:id", verifyToken, (req, res) => {
   );
 });
 
-// ❌ DELETE PART
+// DELETE PART
 app.delete("/api/parts/:id", verifyToken, (req, res) => {
   db.query("DELETE FROM parts WHERE id=?", [req.params.id], (err) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -105,6 +124,100 @@ app.delete("/api/parts/:id", verifyToken, (req, res) => {
   });
 });
 
-app.listen(3000, () => {
-  console.log("Server running on http://localhost:3000");
+// LOG ACTIVITY (take part) — column must be `date` (reserved word in MySQL)
+app.post("/api/activities", verifyToken, (req, res) => {
+  const { part_id, reference, taken_by, quantity, date } = req.body;
+  db.query(
+    "INSERT INTO activities (part_id, reference, taken_by, quantity, `date`) VALUES (?, ?, ?, ?, ?)",
+    [part_id, reference, taken_by, quantity, date],
+    (err, result) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ success: true, id: result.insertId });
+    }
+  );
+});
+
+//  GET ACTIVITIES (pour calcul stock de sécurité)
+app.get("/api/activities", verifyToken, (req, res) => {
+  db.query(
+    "SELECT reference, taken_by, quantity, `date` FROM activities ORDER BY `date` DESC",
+    (err, results) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json(results);
+    }
+  );
+});
+
+//  EXPORT DATA (from/to = YYYY-MM-DD calendar days; filter by local calendar date in DB)
+app.get("/api/export", verifyToken, (req, res) => {
+  const { from, to } = req.query;
+  const dayRe = /^\d{4}-\d{2}-\d{2}$/;
+  if (!from || !to || !dayRe.test(from) || !dayRe.test(to)) {
+    return res.status(400).json({ error: "Query params from and to are required (YYYY-MM-DD)." });
+  }
+
+  // Run all 3 queries in parallel
+  const q1 = new Promise((resolve, reject) => {
+    db.query(
+      "SELECT reference, location, quantity, created_at FROM parts WHERE LEFT(TRIM(COALESCE(CAST(created_at AS CHAR(32)), '')), 10) BETWEEN ? AND ? ORDER BY created_at ASC",
+      [from, to],
+      (err, rows) => err ? reject(err) : resolve(rows)
+    );
+  });
+
+  const q2 = new Promise((resolve, reject) => {
+    db.query(
+      "SELECT reference, taken_by, quantity, `date` FROM activities WHERE LEFT(TRIM(COALESCE(CAST(`date` AS CHAR(64)), '')), 10) BETWEEN ? AND ? ORDER BY `date` ASC",
+      [from, to],
+      (err, rows) => err ? reject(err) : resolve(rows)
+    );
+  });
+
+  const q3 = new Promise((resolve, reject) => {
+    db.query(
+      "SELECT reference, location, quantity FROM parts ORDER BY reference ASC",
+      (err, rows) => err ? reject(err) : resolve(rows)
+    );
+  });
+
+  Promise.all([q1, q2, q3])
+    .then(([entrees, sorties, stock]) => res.json({ entrees, sorties, stock }))
+    .catch(err => {
+      console.error("Export error:", err.message);
+      res.status(500).json({ error: err.message });
+    });
+});
+
+const ensureActivitiesTable = `
+CREATE TABLE IF NOT EXISTS activities (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  part_id INT NOT NULL,
+  reference VARCHAR(255) DEFAULT NULL,
+  taken_by VARCHAR(255) DEFAULT NULL,
+  quantity INT NOT NULL,
+  \`date\` VARCHAR(64) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`;
+
+const ensurePartsEmbeddings = () => {
+  db.query("SHOW COLUMNS FROM parts LIKE 'embedding1'", (err, results) => {
+    if (err) return console.error("Error checking parts columns:", err.message);
+    if (results.length === 0) {
+      console.log("Migrating database: adding embedding columns to parts table...");
+      db.query(
+        "ALTER TABLE parts ADD COLUMN embedding1 LONGTEXT NULL, ADD COLUMN embedding2 LONGTEXT NULL, ADD COLUMN embedding3 LONGTEXT NULL",
+        (alterErr) => {
+          if (alterErr) console.error("Failed to add embedding columns:", alterErr.message);
+          else console.log("Database migrated successfully: embedding columns added.");
+        }
+      );
+    }
+  });
+};
+
+db.query(ensureActivitiesTable, (schemaErr) => {
+  if (schemaErr) console.error("activities table:", schemaErr.message);
+  ensurePartsEmbeddings();
+  app.listen(3000, () => {
+    console.log("Server running on http://localhost:3000");
+  });
 });
