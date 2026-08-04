@@ -1,33 +1,15 @@
 import 'package:excel/excel.dart' as xl;
 import 'package:flutter/services.dart';
-
-/// Résultat du calcul de stock de sécurité pour une pièce.
-class SafetyStockResult {
-  final String reference;
-  final double delaiJours;        // délai moyen de traitement DA (jours)
-  final double consommationJour;  // consommation journalière estimée
-  final int safetyStock;          // stock de sécurité = ceil(conso × délai)
-  final int currentQty;           // quantité actuelle en stock
-  final bool mustOrder;           // true si qty actuelle <= stock de sécurité
-
-  const SafetyStockResult({
-    required this.reference,
-    required this.delaiJours,
-    required this.consommationJour,
-    required this.safetyStock,
-    required this.currentQty,
-    required this.mustOrder,
-  });
-}
+import 'package:gestion_piece_de_rechange/models/safety_stock_result.dart';
 
 class SafetyStockService {
-  /// Délais moyens chargés depuis le fichier Excel (référence → jours).
+  // Délais moyens chargés depuis le fichier Excel (référence → jours).
   static final Map<String, double> _delais = {};
   static bool _loaded = false;
 
-  /// Charge le fichier Excel des délais DA depuis les assets.
-  /// Structure attendue : colonne A = étiquette de ligne (référence),
-  ///                      colonne B = moyenne du délai (en jours).
+  // Charge le fichier Excel des délais DA depuis les assets.
+  // Structure attendue : colonne A = étiquette de ligne (référence),
+  //                      colonne B = moyenne du délai (en jours).
   static Future<void> loadDelais() async {
     if (_loaded) return;
     try {
@@ -69,9 +51,9 @@ class SafetyStockService {
     _loaded = true;
   }
 
-  /// Retourne le délai moyen pour une référence donnée.
-  /// Cherche d'abord une correspondance exacte, puis partielle.
-  /// Si aucune correspondance, retourne [defaultDelai].
+  // Retourne le délai moyen pour une référence donnée.
+  // Cherche d'abord une correspondance exacte, puis partielle.
+  // Si aucune correspondance, retourne [defaultDelai].
   static double getDelai(String reference, {double defaultDelai = 30.0}) {
     final key = reference.trim().toLowerCase();
     if (_delais.containsKey(key)) return _delais[key]!;
@@ -83,10 +65,10 @@ class SafetyStockService {
     return defaultDelai;
   }
 
-  /// Calcule le stock de sécurité pour une liste de pièces.
-  /// [parts]       : liste de maps avec "reference" et "quantity".
-  /// [activities]  : liste des sorties avec "reference" et "quantity".
-  /// [periodDays]  : nombre de jours couverts par les activités.
+  // Calcule le stock de sécurité pour une liste de pièces.
+  // [parts]       : liste de maps avec "reference" et "quantity".
+  // [activities]  : liste des sorties avec "reference" et "quantity".
+  // [periodDays]  : nombre de jours couverts par les activités.
   static List<SafetyStockResult> compute({
     required List parts,
     required List activities,
@@ -129,7 +111,7 @@ class SafetyStockService {
     }).toList();
   }
 
-  /// Retourne uniquement les pièces qui nécessitent une commande.
+  // Retourne uniquement les pièces qui nécessitent une commande.
   static List<SafetyStockResult> getOrderAlerts({
     required List parts,
     required List activities,

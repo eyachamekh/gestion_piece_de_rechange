@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image/image.dart' as img;
 import 'package:tflite_flutter/tflite_flutter.dart';
 
-/// On-device MobileNetV2 feature extractor (TensorFlow Lite).
+// On-device MobileNetV2 feature extractor (TensorFlow Lite).
 class ImageClassifierService {
   static const String modelAsset = 'assets/ml/model_unquant.tflite';
   static const int inputSize = 224;
@@ -37,7 +37,7 @@ class ImageClassifierService {
     _isQuantized = inputType == TensorType.uint8;
   }
 
-  /// Extracts a 1001-dimensional feature embedding vector from the image.
+  // Extracts a 1001-dimensional feature embedding vector from the image.
   Future<List<double>> getEmbedding(File imageFile) async {
     await load();
 
@@ -65,7 +65,7 @@ class ImageClassifierService {
     return output[0];
   }
 
-  /// Calculates the Cosine Similarity between two float vectors.
+  // Calculates the Cosine Similarity between two float vectors.
   static double cosineSimilarity(List<double> a, List<double> b) {
     if (a.length != b.length) return 0.0;
     double dotProduct = 0.0;
@@ -119,4 +119,6 @@ class ImageClassifierService {
     _interpreter = null;
   }
 }
+
+final imageClassifierService = ImageClassifierService();
 
