@@ -70,6 +70,13 @@ class _ScanPageState extends State<ScanPage> {
         );
         return;
       }
+      // Debug: log selected file path and size
+      try {
+        final len = await file.length();
+        debugPrint('scan_page.pickImage: selected file path=${file.path}, size=${len}');
+      } catch (e) {
+        debugPrint('scan_page.pickImage: selected file path=${file.path}, could not read length: $e');
+      }
       if (!mounted) return;
       Navigator.push(context, createRoute(LoadingPage(image: file, token: widget.token)));
     } on PlatformException catch (e) {

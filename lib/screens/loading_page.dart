@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:gestion_piece_de_rechange/screens/result_page.dart';
@@ -26,13 +27,36 @@ class _LoadingPageState extends State<LoadingPage> with SingleTickerProviderStat
   late Animation<double> _pulse;
   String? _error;
   bool _finished = false;
+  Uint8List? _previewBytes;
 
   @override
   void initState() {
     super.initState();
     _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..repeat(reverse: true);
     _pulse = Tween<double>(begin: 0.9, end: 1.05).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+
+    // Debug: print whether an image was passed
+    debugPrint('LoadingPage.initState: widget.image path=${widget.image?.path}');
+
+    // Load the preview bytes from the local File so the image displays immediately and reliably
+    if (widget.image != null) {
+      _loadPreviewBytes();
+    }
+
     _identifyPart();
+  }
+
+  Future<void> _loadPreviewBytes() async {
+    try {
+      final bytes = await widget.image!.readAsBytes();
+      if (!mounted) return;
+      setState(() {
+        _previewBytes = bytes;
+      });
+      debugPrint('LoadingPage._loadPreviewBytes: loaded ${_previewBytes?.lengthInBytes ?? 0} bytes for ${widget.image?.path}');
+    } catch (e) {
+      debugPrint('LoadingPage._loadPreviewBytes error: $e');
+    }
   }
 
   Future<void> _identifyPart() async {
@@ -357,23 +381,30 @@ class _LoadingPageState extends State<LoadingPage> with SingleTickerProviderStat
                 height: 160,
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: widget.image != null
-                      ? Image.file(
-                          widget.image!,
+                  child: _previewBytes != null
+                      ? Image.memory(
+                          _previewBytes!,
                           fit: BoxFit.cover,
                           width: 240,
                           height: 160,
                         )
-                      : Container(
-                          color: Colors.grey[200],
-                          child: const Center(
-                            child: Icon(
-                              Icons.image_not_supported_outlined,
-                              size: 40,
-                              color: Colors.grey,
-                            ),
-                          ),
-                        ),
+                      : (widget.image != null
+                          ? Image.file(
+                              widget.image!,
+                              fit: BoxFit.cover,
+                              width: 240,
+                              height: 160,
+                            )
+                          : Container(
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: Icon(
+                                  Icons.image_not_supported_outlined,
+                                  size: 40,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            )),
                 ),
               ),
             ),
