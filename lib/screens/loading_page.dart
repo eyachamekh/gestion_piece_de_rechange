@@ -61,7 +61,7 @@ class _LoadingPageState extends State<LoadingPage> with SingleTickerProviderStat
         final List<Map<String, dynamic>> candidates = [];
         for (final p in parts) {
           double maxPartScore = -1.0;
-          for (int i = 1; i <= 3; i++) {
+          for (int i = 1; i <= 7; i++) {
             final embStr = p['embedding$i'];
             if (embStr != null && embStr.toString().isNotEmpty) {
               try {
@@ -84,49 +84,44 @@ class _LoadingPageState extends State<LoadingPage> with SingleTickerProviderStat
         // Sort candidates by descending score
         candidates.sort((a, b) => (b['score'] as double).compareTo(a['score'] as double));
 
-        // Thresholds
-        const double acceptThreshold = 0.65; // high confidence -> auto select
-        const double candidateThreshold = 0.45; // include as possible matches
-
-        final filtered = candidates.where((c) => (c['score'] as double) >= candidateThreshold).toList();
+        // ONLY show results between 90% and 100%
+        const double minimumSimilarity = 0.90;
+        final filtered = candidates.where((c) {
+        final score = c['score'] as double;
+        return score >= minimumSimilarity && score <= 1.0;}).toList();
 
         if (filtered.isEmpty) {
-          // No candidates -> show 'doesn't exist' + list of parts for selection
+          // No result between 90% and 100%
+
           if (!mounted) return;
           _finished = true;
-          final chosen = await _showNoMatchList(parts);
-          if (!chosen) {
-            if (!mounted) return;
-            Navigator.pop(context); // go back to choose/take picture
-          }
-          return;
-        } else if (filtered.length == 1) {
-          final best = filtered.first;
-          final p = best['part'] as Map<String, dynamic>;
-          final sc = best['score'] as double;
-          data = {
-            'piece': p['reference'],
-            'reference': p['reference'],
-            'location': p['location'] ?? '—',
-            'quantity': p['quantity'] ?? 0,
-            'id': p['id'],
-            'image1': p['image1'],
-            'image2': p['image2'],
-            'image3': p['image3'],
-            'confidence': sc,
-          };
-          // if low confidence, append note
-          if (sc < acceptThreshold) data['piece'] = '${data['piece']} (Low confidence)';
+          // Show the "no match" sheet and let it handle navigation (cancel will pop the loading page)
+                    _showNoMatchList(parts, widget.image);
+                    return;
+        // } else if (filtered.length == 1) {
+        //   final best = filtered.first;
+        //   final p = best['part'] as Map<String, dynamic>;
+        //   final sc = best['score'] as double;
+        //   data = {
+        //     'piece': p['reference'],
+        //     'reference': p['reference'],
+        //     'location': p['location'] ?? '—',
+        //     'quantity': p['quantity'] ?? 0,
+        //     'id': p['id'],
+        //     'image1': p['image1'],
+        //     'image2': p['image2'],
+        //     'image3': p['image3'],
+        //     'confidence': sc,
+        //   };
+        //   // if low confidence, append note
+        //   if (sc < acceptThreshold) data['piece'] = '${data['piece']} (Low confidence)';
         } else {
           // Multiple similar candidates -> show selection sheet to user
           if (!mounted) return;
           _finished = true;
-          final selected = await _showMatchesSelection(filtered);
-          if (!selected) {
-            if (!mounted) return;
-            Navigator.pop(context);
-          }
-          return; // don't auto-navigate here; selection handler will navigate or return to previous page
+          // Show the matches selection sheet and let it handle navigation (cancel will pop the loading page)
+                    _showMatchesSelection(filtered, widget.image);
+                    return; // don't auto-navigate here; the sheet handles flows
         }
       } catch (e) {
         debugPrint('Database fetch/match error: $e');
@@ -167,136 +162,183 @@ class _LoadingPageState extends State<LoadingPage> with SingleTickerProviderStat
     super.dispose();
   }
 
-  Future<bool> _showNoMatchList(List parts) async {
+  Future<bool> _showNoMatchList(List parts, File? scannedImage) async {
     if (!mounted) return false;
-    final selected = await showModalBottomSheet<dynamic>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(4))),
-                const SizedBox(height: 12),
-                const Text("No matching part found", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                const SizedBox(height: 8),
-                const Text('The part does not exist in the database. You can select an existing part below or open the full list.', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                const SizedBox(height: 12),
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: parts.length,
-                    separatorBuilder: (context, index) => const Divider(height: 12),
-                    itemBuilder: (c, i) {
-                      final p = parts[i] as Map<String, dynamic>;
-                      final img = p['image1'] ?? p['image2'] ?? p['image3'];
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                        leading: img != null
-                            ? Container(width: 56, height: 56, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.grey[200]), child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(ApiConfig.uploadUrl(img), fit: BoxFit.cover)))
-                            : Container(width: 56, height: 56, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.grey[200]), child: const Icon(Icons.image_not_supported_outlined)),
-                        title: Text(p['reference'] ?? '-', style: const TextStyle(fontWeight: FontWeight.w700)),
-                        subtitle: Text('Qty: ${p['quantity'] ?? 0}'),
-                        onTap: () {
-                          Navigator.pop(ctx, p);
-                        },
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(onPressed: () => Navigator.pop(ctx, null), child: const Text('Cancel')),
-                    const SizedBox(width: 8),
-                    ElevatedButton(onPressed: () => Navigator.pop(ctx, 'list'), child: const Text('Open full list')),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
 
-    if (selected == null) return false;
-    if (selected == 'list') {
-      if (!mounted) return false;
-      Navigator.pushReplacement(context, createRoute(ListPage(token: widget.token)));
+      // Show the sheet and attach a callback that will pop the loading page if the user cancels the sheet
+      showModalBottomSheet<dynamic>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+        builder: (ctx) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(4))),
+                  const SizedBox(height: 12),
+                  const Text("No matching part found", style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  const Text('The part does not exist in the database. You can select an existing part below or open the full list.', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  const SizedBox(height: 12),
+                  // Show the scanned image at the top of the sheet if available
+                  if (scannedImage != null) ...[
+                    SizedBox(
+                      height: 120,
+                      width: double.infinity,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(scannedImage, fit: BoxFit.cover),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: parts.length,
+                      separatorBuilder: (context, index) => const Divider(height: 12),
+                      itemBuilder: (c, i) {
+                        final p = parts[i] as Map<String, dynamic>;
+                        String? img;
+                         for (int j = 1; j <= 7; j++) {
+                           final candidate = p['image${j}'];
+                           if (candidate != null && candidate.toString().isNotEmpty) {
+                             img = candidate.toString();
+                             break;
+                           }
+                         }
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          leading: img != null
+                              ? Container(width: 56, height: 56, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.grey[200]), child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(ApiConfig.uploadUrl(img), fit: BoxFit.cover)))
+                              : Container(width: 56, height: 56, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.grey[200]), child: const Icon(Icons.image_not_supported_outlined)),
+                          title: Text(p['reference'] ?? '-', style: const TextStyle(fontWeight: FontWeight.w700)),
+                          subtitle: Text('Qty: ${p['quantity'] ?? 0}'),
+                          onTap: () {
+                            // Push details on top of the sheet so when the user returns they see the same similarity list
+                            final sel = Map<String, dynamic>.from(p);
+                            sel['confidence'] = 0.0;
+                            Navigator.of(ctx).push(createRoute(ResultPage(data: sel, token: widget.token)));
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, null), child: const Text('Cancel')),
+                      const SizedBox(width: 8),
+                      ElevatedButton(onPressed: () => Navigator.pop(ctx, 'list'), child: const Text('Open full list')),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ).then((selected) {
+        // Sheet dismissed: if user cancelled, go back to image chooser
+        if (selected == null) {
+          if (mounted) Navigator.pop(context);
+        }
+        // if selected == 'list', open full list
+        if (selected == 'list') {
+          if (mounted) Navigator.pushReplacement(context, createRoute(ListPage(token: widget.token)));
+        }
+      });
+
       return true;
     }
-    if (!mounted) return false;
-    final sel = Map<String, dynamic>.from(selected as Map);
-    sel['confidence'] = 0.0;
-    Navigator.pushReplacement(context, createRoute(ResultPage(data: sel, token: widget.token)));
-    return true;
-  }
 
-  Future<bool> _showMatchesSelection(List<Map<String, dynamic>> matches) async {
+  Future<bool> _showMatchesSelection(List<Map<String, dynamic>> matches, File? scannedImage) async {
     if (!mounted) return false;
-    final selectedPart = await showModalBottomSheet<Map<String, dynamic>>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(4))),
-                const SizedBox(height: 12),
-                const Text('Multiple matches found', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-                const SizedBox(height: 8),
-                const Text('Select the part that best matches the photo', style: TextStyle(color: Colors.grey, fontSize: 13)),
-                const SizedBox(height: 12),
-                Flexible(
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: matches.length,
-                    separatorBuilder: (context, index) => const Divider(height: 12),                    itemBuilder: (c, i) {
-                      final m = matches[i];
-                      final p = m['part'] as Map<String, dynamic>;
-                      final sc = (m['score'] as double) * 100.0;
-                      final img = p['image1'] ?? p['image2'] ?? p['image3'];
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                        leading: img != null
-                            ? Container(width: 56, height: 56, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.grey[200]), child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(ApiConfig.uploadUrl(img), fit: BoxFit.cover)))
-                            : Container(width: 56, height: 56, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.grey[200]), child: const Icon(Icons.image_not_supported_outlined)),
-                        title: Text(p['reference'] ?? '-', style: const TextStyle(fontWeight: FontWeight.w700)),
-                        subtitle: Text('${sc.toStringAsFixed(1)}% similarity'),
-                        onTap: () {
-                          final selected = Map<String, dynamic>.from(p);
-                          selected['confidence'] = m['score'];
-                          Navigator.pop(ctx, selected);
-                        },
-                      );
-                    },
+
+      // Show the sheet and attach a callback that will pop the loading page if the user cancels the sheet
+      showModalBottomSheet<Map<String, dynamic>>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+        builder: (ctx) {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(4))),
+                  const SizedBox(height: 12),
+                  const Text('Multiple matches found', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                  const SizedBox(height: 8),
+                  const Text('Select the part that best matches the photo', style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  const SizedBox(height: 12),
+                  // Show scanned image at the top of the sheet if available
+                  if (scannedImage != null) ...[
+                    SizedBox(
+                      height: 120,
+                      width: double.infinity,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.file(scannedImage, fit: BoxFit.cover),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: matches.length,
+                      separatorBuilder: (context, index) => const Divider(height: 12),                    itemBuilder: (c, i) {
+                        final m = matches[i];
+                        final p = m['part'] as Map<String, dynamic>;
+                        final sc = (m['score'] as double) * 100.0;
+                        String? img;
+                         for (int j = 1; j <= 7; j++) {
+                           final candidate = p['image${j}'];
+                           if (candidate != null && candidate.toString().isNotEmpty) {
+                             img = candidate.toString();
+                             break;
+                           }
+                         }
+                        return ListTile(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          leading: img != null
+                              ? Container(width: 56, height: 56, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.grey[200]), child: ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(ApiConfig.uploadUrl(img), fit: BoxFit.cover)))
+                              : Container(width: 56, height: 56, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.grey[200]), child: const Icon(Icons.image_not_supported_outlined)),
+                          title: Text(p['reference'] ?? '-', style: const TextStyle(fontWeight: FontWeight.w700)),
+                          // subtitle: Text('${sc.toStringAsFixed(1)}% similarity'),
+                          subtitle: Text('${sc.toStringAsFixed(1)}% similarity'),
+                          onTap: () {
+                            final selected = Map<String, dynamic>.from(p);
+                            selected['confidence'] = m['score'];
+                            // Push details on top of the sheet so Back returns to the same similarity list
+                            Navigator.of(ctx).push(createRoute(ResultPage(data: selected, token: widget.token)));
+                          },
+                        );
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Align(alignment: Alignment.centerRight, child: TextButton(onPressed: () => Navigator.pop(ctx, null), child: const Text('Cancel'))),
-              ],
+                  const SizedBox(height: 12),
+                  Align(alignment: Alignment.centerRight, child: TextButton(onPressed: () => Navigator.pop(ctx, null), child: const Text('Cancel'))),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      ).then((val) {
+        if (val == null) {
+          if (mounted) Navigator.pop(context);
+        }
+      });
 
-    if (selectedPart == null) return false;
-    if (!mounted) return false;
-    Navigator.pushReplacement(context, createRoute(ResultPage(data: selectedPart, token: widget.token)));
-    return true;
-  }
+      return true;
+    }
 
   @override
   Widget build(BuildContext context) {
@@ -304,8 +346,38 @@ class _LoadingPageState extends State<LoadingPage> with SingleTickerProviderStat
       backgroundColor: STBG.navy,
       body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            const SizedBox(height: 24),
+            // Top-center fixed-size preview box for the last chosen/taken picture
+            Center(
+              child: SizedBox(
+                width: 240,
+                height: 160,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: widget.image != null
+                      ? Image.file(
+                          widget.image!,
+                          fit: BoxFit.cover,
+                          width: 240,
+                          height: 160,
+                        )
+                      : Container(
+                          color: Colors.grey[200],
+                          child: const Center(
+                            child: Icon(
+                              Icons.image_not_supported_outlined,
+                              size: 40,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
@@ -314,7 +386,7 @@ class _LoadingPageState extends State<LoadingPage> with SingleTickerProviderStat
               ),
               child: stbgLogo(height: 44),
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 20),
             if (!_finished)
               ScaleTransition(
                 scale: _pulse,

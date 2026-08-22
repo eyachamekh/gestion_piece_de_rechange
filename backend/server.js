@@ -63,21 +63,29 @@ app.get("/api/parts", verifyToken, (req, res) => {
   });
 });
 
-// ADD PART (with 3 images & embeddings)
+// ADD PART (with 3 to 7 images & embeddings)
 app.post("/api/parts", verifyToken, upload.fields([
   { name: "image1", maxCount: 1 },
   { name: "image2", maxCount: 1 },
   { name: "image3", maxCount: 1 },
+  { name: "image4", maxCount: 1 },
+  { name: "image5", maxCount: 1 },
+  { name: "image6", maxCount: 1 },
+  { name: "image7", maxCount: 1 },
 ]), (req, res) => {
-  const { reference, location, quantity, embedding1, embedding2, embedding3 } = req.body;
+  const { reference, location, quantity, embedding1, embedding2, embedding3, embedding4, embedding5, embedding6, embedding7 } = req.body;
   const files = req.files || {};
   const image1 = files["image1"] ? files["image1"][0].filename : null;
   const image2 = files["image2"] ? files["image2"][0].filename : null;
   const image3 = files["image3"] ? files["image3"][0].filename : null;
+  const image4 = files["image4"] ? files["image4"][0].filename : null;
+  const image5 = files["image5"] ? files["image5"][0].filename : null;
+  const image6 = files["image6"] ? files["image6"][0].filename : null;
+  const image7 = files["image7"] ? files["image7"][0].filename : null;
   const created_at = new Date().toISOString().slice(0, 19).replace("T", " ");
   db.query(
-    "INSERT INTO parts (reference, location, quantity, image1, image2, image3, embedding1, embedding2, embedding3, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [reference, location, quantity, image1, image2, image3, embedding1 || null, embedding2 || null, embedding3 || null, created_at],
+    "INSERT INTO parts (reference, location, quantity, image1, image2, image3, image4, image5, image6, image7, embedding1, embedding2, embedding3, embedding4, embedding5, embedding6, embedding7, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [reference, location, quantity, image1, image2, image3, image4, image5, image6, image7, embedding1 || null, embedding2 || null, embedding3 || null, embedding4 || null, embedding5 || null, embedding6 || null, embedding7 || null, created_at],
     (err, result) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true, id: result.insertId });
@@ -90,20 +98,31 @@ app.put("/api/parts/:id", verifyToken, upload.fields([
   { name: "image1", maxCount: 1 },
   { name: "image2", maxCount: 1 },
   { name: "image3", maxCount: 1 },
+  { name: "image4", maxCount: 1 },
+  { name: "image5", maxCount: 1 },
+  { name: "image6", maxCount: 1 },
+  { name: "image7", maxCount: 1 },
 ]), (req, res) => {
-  const { reference, location, quantity, embedding1, embedding2, embedding3 } = req.body;
+  const { reference, location, quantity, embedding1, embedding2, embedding3, embedding4, embedding5, embedding6, embedding7 } = req.body;
   const files = req.files || {};
 
-  // Build dynamic SET clause — only update image/embedding fields if new files were uploaded
   const fields = ["reference=?", "location=?", "quantity=?"];
   const values = [reference, location, quantity];
 
   if (files["image1"]) { fields.push("image1=?"); values.push(files["image1"][0].filename); }
   if (files["image2"]) { fields.push("image2=?"); values.push(files["image2"][0].filename); }
   if (files["image3"]) { fields.push("image3=?"); values.push(files["image3"][0].filename); }
-  if (embedding1)      { fields.push("embedding1=?"); values.push(embedding1); }
-  if (embedding2)      { fields.push("embedding2=?"); values.push(embedding2); }
-  if (embedding3)      { fields.push("embedding3=?"); values.push(embedding3); }
+  if (files["image4"]) { fields.push("image4=?"); values.push(files["image4"][0].filename); }
+  if (files["image5"]) { fields.push("image5=?"); values.push(files["image5"][0].filename); }
+  if (files["image6"]) { fields.push("image6=?"); values.push(files["image6"][0].filename); }
+  if (files["image7"]) { fields.push("image7=?"); values.push(files["image7"][0].filename); }
+  if (embedding1) { fields.push("embedding1=?"); values.push(embedding1); }
+  if (embedding2) { fields.push("embedding2=?"); values.push(embedding2); }
+  if (embedding3) { fields.push("embedding3=?"); values.push(embedding3); }
+  if (embedding4) { fields.push("embedding4=?"); values.push(embedding4); }
+  if (embedding5) { fields.push("embedding5=?"); values.push(embedding5); }
+  if (embedding6) { fields.push("embedding6=?"); values.push(embedding6); }
+  if (embedding7) { fields.push("embedding7=?"); values.push(embedding7); }
 
   values.push(req.params.id);
   db.query(
@@ -199,6 +218,41 @@ CREATE TABLE IF NOT EXISTS activities (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`;
 
 const ensurePartsEmbeddings = () => {
+  const addMissingColumns = [
+    ["image4", "VARCHAR(255) NULL"],
+    ["image5", "VARCHAR(255) NULL"],
+    ["image6", "VARCHAR(255) NULL"],
+    ["image7", "VARCHAR(255) NULL"],
+    ["embedding4", "LONGTEXT NULL"],
+    ["embedding5", "LONGTEXT NULL"],
+    ["embedding6", "LONGTEXT NULL"],
+    ["embedding7", "LONGTEXT NULL"],
+  ];
+
+  const addColumn = (index) => {
+    if (index >= addMissingColumns.length) {
+      return;
+    }
+    const [columnName, definition] = addMissingColumns[index];
+    db.query(`SHOW COLUMNS FROM parts LIKE '${columnName}'`, (err, results) => {
+      if (err) {
+        console.error("Error checking parts column:", err.message);
+        addColumn(index + 1);
+        return;
+      }
+      if (results.length === 0) {
+        db.query(`ALTER TABLE parts ADD COLUMN ${columnName} ${definition}`, (alterErr) => {
+          if (alterErr) {
+            console.error(`Failed to add column ${columnName}:`, alterErr.message);
+          }
+          addColumn(index + 1);
+        });
+      } else {
+        addColumn(index + 1);
+      }
+    });
+  };
+
   db.query("SHOW COLUMNS FROM parts LIKE 'embedding1'", (err, results) => {
     if (err) return console.error("Error checking parts columns:", err.message);
     if (results.length === 0) {
@@ -207,9 +261,11 @@ const ensurePartsEmbeddings = () => {
         "ALTER TABLE parts ADD COLUMN embedding1 LONGTEXT NULL, ADD COLUMN embedding2 LONGTEXT NULL, ADD COLUMN embedding3 LONGTEXT NULL",
         (alterErr) => {
           if (alterErr) console.error("Failed to add embedding columns:", alterErr.message);
-          else console.log("Database migrated successfully: embedding columns added.");
+          addColumn(0);
         }
       );
+    } else {
+      addColumn(0);
     }
   });
 };

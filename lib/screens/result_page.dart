@@ -42,7 +42,10 @@ class _ResultPageState extends State<ResultPage> {
         if (res.statusCode == 200) activities = jsonDecode(res.body);
       } catch (_) {}
     }
-    final results = SafetyStockService.compute(parts: [widget.data], activities: activities);
+    final results = SafetyStockService.compute(
+      parts: [widget.data],
+      activities: activities,
+    );
     if (results.isNotEmpty && mounted) {
       setState(() => _ssResult = results.first);
     }
@@ -63,7 +66,8 @@ class _ResultPageState extends State<ResultPage> {
 
     if (lang == 'fr') {
       subject = 'STBG — Demande de réapprovisionnement : $ref';
-      body = '''Madame, Monsieur,
+      body =
+          '''Madame, Monsieur,
 
 Nous vous informons que le stock de la pièce de rechange suivante a atteint son niveau de sécurité au sein de la société STBG.
 
@@ -87,7 +91,8 @@ Téléphone : 71 434 880
 ''';
     } else if (lang == 'ar') {
       subject = 'STBG — طلب إعادة تزويد : $ref';
-      body = '''السيد/السيدة،
+      body =
+          '''السيد/السيدة،
 
 نحيطكم علماً أن مخزون قطعة الغيار التالية قد وصل إلى مستوى الأمان لدى شركة STBG.
 
@@ -112,7 +117,8 @@ Téléphone : 71 434 880
     } else {
       // Default to English
       subject = 'STBG — Replenishment request: $ref';
-      body = '''Dear Sir / Madam,
+      body =
+          '''Dear Sir / Madam,
 
 We inform you that the stock of the following spare part has reached its safety level within STBG.
 
@@ -145,12 +151,42 @@ Tel: 71 434 880
     try {
       if (!await launchUrl(uri)) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open mail app')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open mail app')),
+        );
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
+  }
+
+  void _openImage(String url, String tag) {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (_) => GestureDetector(
+        onTap: () => Navigator.pop(context),
+        child: Container(
+          color: Colors.black,
+          child: Center(
+            child: Hero(
+              tag: tag,
+              child: InteractiveViewer(
+                child: Image.network(
+                  url,
+                  fit: BoxFit.contain,
+                  errorBuilder: (c, e, s) =>
+                      const Icon(Icons.broken_image, color: Colors.grey),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -163,24 +199,28 @@ Tel: 71 434 880
     final Color statusColor = isOrderAlert
         ? STBG.gold
         : mustOrder
-            ? STBG.danger
-            : STBG.success;
+        ? STBG.danger
+        : STBG.success;
     final IconData statusIcon = isOrderAlert
         ? Icons.shopping_cart_outlined
         : mustOrder
-            ? Icons.warning_amber_rounded
-            : Icons.check_circle_outline_rounded;
+        ? Icons.warning_amber_rounded
+        : Icons.check_circle_outline_rounded;
     final String statusText = isOrderAlert
         ? 'Stock de sécurité atteint — Passer une commande DA'
         : mustOrder
-            ? 'Low Stock — Reorder recommended'
-            : 'In Stock — Available';
+        ? 'Low Stock — Reorder recommended'
+        : 'In Stock — Available';
 
     return Scaffold(
       backgroundColor: STBG.surface,
       body: Column(
         children: [
-          const STBGHeader(title: 'Part Details', subtitle: 'Identified spare part information', showBack: true),
+          const STBGHeader(
+            title: 'Part Details',
+            subtitle: 'Identified spare part information',
+            showBack: true,
+          ),
           const SizedBox(height: 12),
           if (["image1", "image2", "image3"].any((k) => widget.data[k] != null))
             Padding(
@@ -191,23 +231,53 @@ Tel: 71 434 880
                   Expanded(
                     child: SizedBox(
                       height: 110,
-                      child: ListView(
+                      child: SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
-                        children: ["image1", "image2", "image3"].where((k) => widget.data[k] != null).map((k) {
-                          return Container(
-                            margin: const EdgeInsets.only(right: 10),
-                            width: 110,
-                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Colors.grey[200]),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                ApiConfig.uploadUrl('${widget.data[k]}'),
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stack) => const Icon(Icons.broken_image, color: Colors.grey),
-                              ),
-                            ),
-                          );
-                        }).toList(),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: ["image1", "image2", "image3"]
+                              .where((k) => widget.data[k] != null)
+                              .toList()
+                              .asMap()
+                              .entries
+                              .map((entry) {
+                                final idx = entry.key;
+                                final k = entry.value;
+                                final url = ApiConfig.uploadUrl(
+                                  '${widget.data[k]}',
+                                );
+                                final tag =
+                                    'part-${widget.data['id']}-img-$idx';
+                                return Container(
+                                  margin: const EdgeInsets.only(right: 10),
+                                  width: 110,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(12),
+                                    color: Colors.grey[200],
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(12),
+                                    child: GestureDetector(
+                                      onTap: () => _openImage(url, tag),
+                                      child: Hero(
+                                        tag: tag,
+                                        child: Image.network(
+                                          url,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stack) =>
+                                                  const Icon(
+                                                    Icons.broken_image,
+                                                    color: Colors.grey,
+                                                  ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              })
+                              .toList(),
+                        ),
                       ),
                     ),
                   ),
@@ -215,11 +285,23 @@ Tel: 71 434 880
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: STBG.navy,
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    icon: const Icon(Icons.remove_circle_outline, size: 16, color: Colors.white),
-                    label: TranslatedText('Take', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                    icon: const Icon(
+                      Icons.remove_circle_outline,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                    label: TranslatedText(
+                      'Take',
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
                     onPressed: () => _showTakeDialog(),
                   ),
                 ],
@@ -233,11 +315,23 @@ Tel: 71 434 880
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: STBG.navy,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                  icon: const Icon(Icons.remove_circle_outline, size: 16, color: Colors.white),
-                  label: TranslatedText('Take', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                  icon: const Icon(
+                    Icons.remove_circle_outline,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                  label: TranslatedText(
+                    'Take',
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                  ),
                   onPressed: () => _showTakeDialog(),
                 ),
               ),
@@ -249,7 +343,10 @@ Tel: 71 434 880
                 children: [
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(12),
@@ -262,7 +359,11 @@ Tel: 71 434 880
                         Expanded(
                           child: Text(
                             statusText,
-                            style: TextStyle(color: statusColor, fontWeight: FontWeight.w600, fontSize: 13),
+                            style: TextStyle(
+                              color: statusColor,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                       ],
@@ -283,37 +384,70 @@ Tel: 71 434 880
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.analytics_outlined, size: 14, color: STBG.gold),
+                              Icon(
+                                Icons.analytics_outlined,
+                                size: 14,
+                                color: STBG.gold,
+                              ),
                               const SizedBox(width: 6),
                               const Text(
                                 'Analyse stock de sécurité',
-                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Color(0xFF7A4F00)),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                  color: Color(0xFF7A4F00),
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 10),
                           Row(
                             children: [
-                              SSMetric(label: 'Stock actuel', value: '${_ssResult!.currentQty}', color: STBG.danger),
+                              SSMetric(
+                                label: 'Stock actuel',
+                                value: '${_ssResult!.currentQty}',
+                                color: STBG.danger,
+                              ),
                               const SizedBox(width: 8),
-                              SSMetric(label: 'Stock sécurité', value: '${_ssResult!.safetyStock}', color: STBG.steel),
+                              SSMetric(
+                                label: 'Stock sécurité',
+                                value: '${_ssResult!.safetyStock}',
+                                color: STBG.steel,
+                              ),
                               const SizedBox(width: 8),
-                              SSMetric(label: 'Délai DA', value: '${_ssResult!.delaiJours.toStringAsFixed(0)} j', color: STBG.success),
+                              SSMetric(
+                                label: 'Délai DA',
+                                value:
+                                    '${_ssResult!.delaiJours.toStringAsFixed(0)} j',
+                                color: STBG.success,
+                              ),
                               const SizedBox(width: 8),
-                              SSMetric(label: 'Conso/jour', value: _ssResult!.consommationJour.toStringAsFixed(2), color: const Color(0xFF7B1FA2)),
+                              SSMetric(
+                                label: 'Conso/jour',
+                                value: _ssResult!.consommationJour
+                                    .toStringAsFixed(2),
+                                color: const Color(0xFF7B1FA2),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 8),
                           Container(
                             width: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
                             decoration: BoxDecoration(
                               color: STBG.gold.withOpacity(0.12),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Text(
                               '⚠️  Quantité actuelle ≤ stock de sécurité\nUne demande d\'achat (DA) doit être passée immédiatement.',
-                              style: TextStyle(fontSize: 11, color: Color(0xFF7A4F00), height: 1.5),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF7A4F00),
+                                height: 1.5,
+                              ),
                             ),
                           ),
                         ],
@@ -327,53 +461,97 @@ Tel: 71 434 880
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
-                      boxShadow: const [BoxShadow(color: Color(0x0D000000), blurRadius: 12, offset: Offset(0, 4))],
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x0D000000),
+                          blurRadius: 12,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Column(
                       children: [
-                        InfoRow(icon: Icons.tag_rounded, label: 'Reference', value: widget.data['reference'] ?? '-'),
+                        InfoRow(
+                          icon: Icons.tag_rounded,
+                          label: 'Reference',
+                          value: widget.data['reference'] ?? '-',
+                        ),
                         const SectionDivider(),
-                        InfoRow(icon: Icons.location_on_outlined, label: 'Location', value: widget.data['location'] ?? '-'),
+                        InfoRow(
+                          icon: Icons.location_on_outlined,
+                          label: 'Location',
+                          value: widget.data['location'] ?? '-',
+                        ),
                         const SectionDivider(),
                         InfoRow(
                           icon: Icons.inventory_2_outlined,
                           label: 'Quantity',
                           value: qty.toString(),
                           badge: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: statusColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: statusColor.withOpacity(0.3)),
+                              border: Border.all(
+                                color: statusColor.withOpacity(0.3),
+                              ),
                             ),
-                            child: Builder(builder: (ctx) {
-                              final lang = langNotifier.value;
-                              final String badgeLabel;
-                              if (isOrderAlert) {
-                                badgeLabel = lang == 'fr' ? 'À commander' : (lang == 'ar' ? 'طلب' : 'Order');
-                              } else {
-                                badgeLabel = lang == 'fr' ? (mustOrder ? 'Stock faible' : 'En stock') : (lang == 'ar' ? (mustOrder ? 'مخزون منخفض' : 'متوفر') : (mustOrder ? 'Low Stock' : 'In Stock'));
-                              }
+                            child: Builder(
+                              builder: (ctx) {
+                                final lang = langNotifier.value;
+                                final String badgeLabel;
+                                if (isOrderAlert) {
+                                  badgeLabel = lang == 'fr'
+                                      ? 'À commander'
+                                      : (lang == 'ar' ? 'طلب' : 'Order');
+                                } else {
+                                  badgeLabel = lang == 'fr'
+                                      ? (mustOrder
+                                            ? 'Stock faible'
+                                            : 'En stock')
+                                      : (lang == 'ar'
+                                            ? (mustOrder
+                                                  ? 'مخزون منخفض'
+                                                  : 'متوفر')
+                                            : (mustOrder
+                                                  ? 'Low Stock'
+                                                  : 'In Stock'));
+                                }
 
-                              return InkWell(
-                                borderRadius: BorderRadius.circular(20),
-                                onTap: isOrderAlert ? _sendOrderEmail : null,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(statusIcon, size: 11, color: statusColor),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        badgeLabel,
-                                        style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.w700),
-                                      ),
-                                    ],
+                                return InkWell(
+                                  borderRadius: BorderRadius.circular(20),
+                                  onTap: isOrderAlert ? _sendOrderEmail : null,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6.0,
+                                      vertical: 2.0,
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          statusIcon,
+                                          size: 11,
+                                          color: statusColor,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          badgeLabel,
+                                          style: TextStyle(
+                                            color: statusColor,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            }),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ],
@@ -401,22 +579,43 @@ Tel: 71 434 880
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            DialogField(ctrl: nameCtrl, label: t('Person name'), icon: Icons.person_outline),
+            DialogField(
+              ctrl: nameCtrl,
+              label: t('Person name'),
+              icon: Icons.person_outline,
+            ),
             const SizedBox(height: 10),
-            DialogField(ctrl: qtyCtrl, label: t('Quantity'), icon: Icons.remove_circle_outline, numeric: true, helper: '${t('Available')}: $available'),
+            DialogField(
+              ctrl: qtyCtrl,
+              label: t('Quantity'),
+              icon: Icons.remove_circle_outline,
+              numeric: true,
+              helper: '${t('Available')}: $available',
+            ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const TranslatedText('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const TranslatedText('Cancel'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: STBG.navy, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: STBG.navy,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
             onPressed: () async {
               final take = int.tryParse(qtyCtrl.text) ?? 0;
-              if (take <= 0 || take > available || nameCtrl.text.trim().isEmpty) return;
+              if (take <= 0 || take > available || nameCtrl.text.trim().isEmpty)
+                return;
               final newQty = available - take;
               if (widget.token == null) {
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Not authenticated')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Not authenticated')),
+                );
                 return;
               }
               final res = await http.put(
@@ -441,17 +640,26 @@ Tel: 71 434 880
                     'date': now,
                   }),
                 );
-                addToHistory({'reference': widget.data['reference'], 'takenBy': nameCtrl.text.trim(), 'quantity': take, 'date': now});
+                addToHistory({
+                  'reference': widget.data['reference'],
+                  'takenBy': nameCtrl.text.trim(),
+                  'quantity': take,
+                  'date': now,
+                });
                 saveHistory();
                 if (!mounted) return;
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('Quantity updated'))));
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(t('Quantity updated'))));
                 setState(() {
                   widget.data['quantity'] = newQty;
                 });
               } else {
                 if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: ${res.statusCode}')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Failed: ${res.statusCode}')),
+                );
               }
             },
             child: const TranslatedText('Confirm'),
