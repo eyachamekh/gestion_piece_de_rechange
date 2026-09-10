@@ -1,0 +1,1873 @@
+{
+  "embedding_dim": 1280,
+  "model": "mobilenet_v2_feature_vector.tflite",
+  "metadata": {
+    "PART_1\\1788424443661.jpg": {
+      "part_id": 1,
+      "split": "train",
+      "filename": "1788424443661.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_1\\1788424443661.bin"
+    },
+    "PART_1\\1788424443705.jpg": {
+      "part_id": 1,
+      "split": "train",
+      "filename": "1788424443705.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_1\\1788424443705.bin"
+    },
+    "PART_1\\1788424443714.jpg": {
+      "part_id": 1,
+      "split": "train",
+      "filename": "1788424443714.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_1\\1788424443714.bin"
+    },
+    "PART_10\\1788451964911.jpg": {
+      "part_id": 10,
+      "split": "train",
+      "filename": "1788451964911.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_10\\1788451964911.bin"
+    },
+    "PART_10\\1788451964916.jpg": {
+      "part_id": 10,
+      "split": "train",
+      "filename": "1788451964916.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_10\\1788451964916.bin"
+    },
+    "PART_11\\1788452269913.jpg": {
+      "part_id": 11,
+      "split": "train",
+      "filename": "1788452269913.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_11\\1788452269913.bin"
+    },
+    "PART_11\\1788452269916.jpg": {
+      "part_id": 11,
+      "split": "train",
+      "filename": "1788452269916.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_11\\1788452269916.bin"
+    },
+    "PART_11\\1788452269918.jpg": {
+      "part_id": 11,
+      "split": "train",
+      "filename": "1788452269918.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_11\\1788452269918.bin"
+    },
+    "PART_12\\1788455263006.jpg": {
+      "part_id": 12,
+      "split": "train",
+      "filename": "1788455263006.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_12\\1788455263006.bin"
+    },
+    "PART_12\\1788455263022.jpg": {
+      "part_id": 12,
+      "split": "train",
+      "filename": "1788455263022.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_12\\1788455263022.bin"
+    },
+    "PART_12\\1788455263034.jpg": {
+      "part_id": 12,
+      "split": "train",
+      "filename": "1788455263034.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_12\\1788455263034.bin"
+    },
+    "PART_13\\1788455879603.jpg": {
+      "part_id": 13,
+      "split": "train",
+      "filename": "1788455879603.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_13\\1788455879603.bin"
+    },
+    "PART_13\\1788455879607.jpg": {
+      "part_id": 13,
+      "split": "train",
+      "filename": "1788455879607.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_13\\1788455879607.bin"
+    },
+    "PART_14\\1788456490716.jpg": {
+      "part_id": 14,
+      "split": "train",
+      "filename": "1788456490716.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_14\\1788456490716.bin"
+    },
+    "PART_14\\1788456490720.jpg": {
+      "part_id": 14,
+      "split": "train",
+      "filename": "1788456490720.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_14\\1788456490720.bin"
+    },
+    "PART_14\\1788456490721.jpg": {
+      "part_id": 14,
+      "split": "train",
+      "filename": "1788456490721.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_14\\1788456490721.bin"
+    },
+    "PART_15\\1788456788622.jpg": {
+      "part_id": 15,
+      "split": "train",
+      "filename": "1788456788622.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_15\\1788456788622.bin"
+    },
+    "PART_15\\1788456788627.jpg": {
+      "part_id": 15,
+      "split": "train",
+      "filename": "1788456788627.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_15\\1788456788627.bin"
+    },
+    "PART_16\\1788457132520.jpg": {
+      "part_id": 16,
+      "split": "train",
+      "filename": "1788457132520.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_16\\1788457132520.bin"
+    },
+    "PART_16\\1788457132522.jpg": {
+      "part_id": 16,
+      "split": "train",
+      "filename": "1788457132522.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_16\\1788457132522.bin"
+    },
+    "PART_16\\1788457132527.jpg": {
+      "part_id": 16,
+      "split": "train",
+      "filename": "1788457132527.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_16\\1788457132527.bin"
+    },
+    "PART_17\\1788457271490.jpg": {
+      "part_id": 17,
+      "split": "train",
+      "filename": "1788457271490.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_17\\1788457271490.bin"
+    },
+    "PART_17\\1788457271496.jpg": {
+      "part_id": 17,
+      "split": "train",
+      "filename": "1788457271496.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_17\\1788457271496.bin"
+    },
+    "PART_18\\1788457522911.jpg": {
+      "part_id": 18,
+      "split": "train",
+      "filename": "1788457522911.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_18\\1788457522911.bin"
+    },
+    "PART_18\\1788457522914.jpg": {
+      "part_id": 18,
+      "split": "train",
+      "filename": "1788457522914.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_18\\1788457522914.bin"
+    },
+    "PART_19\\1788457619682.jpg": {
+      "part_id": 19,
+      "split": "train",
+      "filename": "1788457619682.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_19\\1788457619682.bin"
+    },
+    "PART_19\\1788457619687.jpg": {
+      "part_id": 19,
+      "split": "train",
+      "filename": "1788457619687.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_19\\1788457619687.bin"
+    },
+    "PART_2\\1788424613903.jpg": {
+      "part_id": 2,
+      "split": "train",
+      "filename": "1788424613903.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_2\\1788424613903.bin"
+    },
+    "PART_2\\1788424613906.jpg": {
+      "part_id": 2,
+      "split": "train",
+      "filename": "1788424613906.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_2\\1788424613906.bin"
+    },
+    "PART_2\\1788424613907.jpg": {
+      "part_id": 2,
+      "split": "train",
+      "filename": "1788424613907.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_2\\1788424613907.bin"
+    },
+    "PART_2\\1788424613910.jpg": {
+      "part_id": 2,
+      "split": "train",
+      "filename": "1788424613910.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_2\\1788424613910.bin"
+    },
+    "PART_20\\1788457797476.jpg": {
+      "part_id": 20,
+      "split": "train",
+      "filename": "1788457797476.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_20\\1788457797476.bin"
+    },
+    "PART_20\\1788457797483.jpg": {
+      "part_id": 20,
+      "split": "train",
+      "filename": "1788457797483.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_20\\1788457797483.bin"
+    },
+    "PART_20\\1788457797488.jpg": {
+      "part_id": 20,
+      "split": "train",
+      "filename": "1788457797488.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_20\\1788457797488.bin"
+    },
+    "PART_21\\1788457914017.jpg": {
+      "part_id": 21,
+      "split": "train",
+      "filename": "1788457914017.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_21\\1788457914017.bin"
+    },
+    "PART_21\\1788457914023.jpg": {
+      "part_id": 21,
+      "split": "train",
+      "filename": "1788457914023.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_21\\1788457914023.bin"
+    },
+    "PART_22\\1788458171716.jpg": {
+      "part_id": 22,
+      "split": "train",
+      "filename": "1788458171716.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_22\\1788458171716.bin"
+    },
+    "PART_22\\1788458171720.jpg": {
+      "part_id": 22,
+      "split": "train",
+      "filename": "1788458171720.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_22\\1788458171720.bin"
+    },
+    "PART_23\\1788458304670.jpg": {
+      "part_id": 23,
+      "split": "train",
+      "filename": "1788458304670.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_23\\1788458304670.bin"
+    },
+    "PART_23\\1788458304674.jpg": {
+      "part_id": 23,
+      "split": "train",
+      "filename": "1788458304674.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_23\\1788458304674.bin"
+    },
+    "PART_24\\1788458395026.jpg": {
+      "part_id": 24,
+      "split": "train",
+      "filename": "1788458395026.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_24\\1788458395026.bin"
+    },
+    "PART_24\\1788458395030.jpg": {
+      "part_id": 24,
+      "split": "train",
+      "filename": "1788458395030.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_24\\1788458395030.bin"
+    },
+    "PART_25\\1788458761957.jpg": {
+      "part_id": 25,
+      "split": "train",
+      "filename": "1788458761957.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_25\\1788458761957.bin"
+    },
+    "PART_25\\1788458761960.jpg": {
+      "part_id": 25,
+      "split": "train",
+      "filename": "1788458761960.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_25\\1788458761960.bin"
+    },
+    "PART_25\\1788458761963.jpg": {
+      "part_id": 25,
+      "split": "train",
+      "filename": "1788458761963.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_25\\1788458761963.bin"
+    },
+    "PART_25\\1788458761967.jpg": {
+      "part_id": 25,
+      "split": "train",
+      "filename": "1788458761967.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_25\\1788458761967.bin"
+    },
+    "PART_26\\1788470896490.jpg": {
+      "part_id": 26,
+      "split": "train",
+      "filename": "1788470896490.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_26\\1788470896490.bin"
+    },
+    "PART_26\\1788470896492.jpg": {
+      "part_id": 26,
+      "split": "train",
+      "filename": "1788470896492.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_26\\1788470896492.bin"
+    },
+    "PART_27\\1788471179759.jpg": {
+      "part_id": 27,
+      "split": "train",
+      "filename": "1788471179759.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_27\\1788471179759.bin"
+    },
+    "PART_27\\1788471179762.jpg": {
+      "part_id": 27,
+      "split": "train",
+      "filename": "1788471179762.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_27\\1788471179762.bin"
+    },
+    "PART_28\\1788471435405.jpg": {
+      "part_id": 28,
+      "split": "train",
+      "filename": "1788471435405.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_28\\1788471435405.bin"
+    },
+    "PART_28\\1788471435407.jpg": {
+      "part_id": 28,
+      "split": "train",
+      "filename": "1788471435407.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_28\\1788471435407.bin"
+    },
+    "PART_29\\1788471685917.jpg": {
+      "part_id": 29,
+      "split": "train",
+      "filename": "1788471685917.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_29\\1788471685917.bin"
+    },
+    "PART_29\\1788471685918.jpg": {
+      "part_id": 29,
+      "split": "train",
+      "filename": "1788471685918.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_29\\1788471685918.bin"
+    },
+    "PART_3\\1788424793680.jpg": {
+      "part_id": 3,
+      "split": "train",
+      "filename": "1788424793680.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_3\\1788424793680.bin"
+    },
+    "PART_3\\1788424793682.jpg": {
+      "part_id": 3,
+      "split": "train",
+      "filename": "1788424793682.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_3\\1788424793682.bin"
+    },
+    "PART_3\\1788424793684.jpg": {
+      "part_id": 3,
+      "split": "train",
+      "filename": "1788424793684.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_3\\1788424793684.bin"
+    },
+    "PART_3\\1788424793687.jpg": {
+      "part_id": 3,
+      "split": "train",
+      "filename": "1788424793687.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_3\\1788424793687.bin"
+    },
+    "PART_30\\1788471814148.jpg": {
+      "part_id": 30,
+      "split": "train",
+      "filename": "1788471814148.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_30\\1788471814148.bin"
+    },
+    "PART_30\\1788471814150.jpg": {
+      "part_id": 30,
+      "split": "train",
+      "filename": "1788471814150.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_30\\1788471814150.bin"
+    },
+    "PART_31\\1788472053280.jpg": {
+      "part_id": 31,
+      "split": "train",
+      "filename": "1788472053280.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_31\\1788472053280.bin"
+    },
+    "PART_31\\1788472053282.jpg": {
+      "part_id": 31,
+      "split": "train",
+      "filename": "1788472053282.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_31\\1788472053282.bin"
+    },
+    "PART_32\\1788472292582.jpg": {
+      "part_id": 32,
+      "split": "train",
+      "filename": "1788472292582.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_32\\1788472292582.bin"
+    },
+    "PART_32\\1788472292585.jpg": {
+      "part_id": 32,
+      "split": "train",
+      "filename": "1788472292585.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_32\\1788472292585.bin"
+    },
+    "PART_33\\1788472468203.jpg": {
+      "part_id": 33,
+      "split": "train",
+      "filename": "1788472468203.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_33\\1788472468203.bin"
+    },
+    "PART_33\\1788472468205.jpg": {
+      "part_id": 33,
+      "split": "train",
+      "filename": "1788472468205.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_33\\1788472468205.bin"
+    },
+    "PART_34\\1788474559369.jpeg": {
+      "part_id": 34,
+      "split": "train",
+      "filename": "1788474559369.jpeg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_34\\1788474559369.bin"
+    },
+    "PART_34\\1788474559376.jpeg": {
+      "part_id": 34,
+      "split": "train",
+      "filename": "1788474559376.jpeg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_34\\1788474559376.bin"
+    },
+    "PART_35\\1788474783648.jpg": {
+      "part_id": 35,
+      "split": "train",
+      "filename": "1788474783648.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_35\\1788474783648.bin"
+    },
+    "PART_35\\1788474783650.jpg": {
+      "part_id": 35,
+      "split": "train",
+      "filename": "1788474783650.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_35\\1788474783650.bin"
+    },
+    "PART_35\\1788474783654.jpg": {
+      "part_id": 35,
+      "split": "train",
+      "filename": "1788474783654.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_35\\1788474783654.bin"
+    },
+    "PART_36\\1788475933209.jpg": {
+      "part_id": 36,
+      "split": "train",
+      "filename": "1788475933209.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_36\\1788475933209.bin"
+    },
+    "PART_36\\1788475933210.jpg": {
+      "part_id": 36,
+      "split": "train",
+      "filename": "1788475933210.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_36\\1788475933210.bin"
+    },
+    "PART_37\\1788476195960.jpg": {
+      "part_id": 37,
+      "split": "train",
+      "filename": "1788476195960.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_37\\1788476195960.bin"
+    },
+    "PART_37\\1788476195962.jpg": {
+      "part_id": 37,
+      "split": "train",
+      "filename": "1788476195962.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_37\\1788476195962.bin"
+    },
+    "PART_38\\1788477748442.jpg": {
+      "part_id": 38,
+      "split": "train",
+      "filename": "1788477748442.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_38\\1788477748442.bin"
+    },
+    "PART_38\\1788477748445.jpg": {
+      "part_id": 38,
+      "split": "train",
+      "filename": "1788477748445.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_38\\1788477748445.bin"
+    },
+    "PART_39\\1788479972418.jpg": {
+      "part_id": 39,
+      "split": "train",
+      "filename": "1788479972418.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_39\\1788479972418.bin"
+    },
+    "PART_39\\1788479972421.jpg": {
+      "part_id": 39,
+      "split": "train",
+      "filename": "1788479972421.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_39\\1788479972421.bin"
+    },
+    "PART_4\\1788424960409.jpg": {
+      "part_id": 4,
+      "split": "train",
+      "filename": "1788424960409.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_4\\1788424960409.bin"
+    },
+    "PART_4\\1788424960414.jpg": {
+      "part_id": 4,
+      "split": "train",
+      "filename": "1788424960414.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_4\\1788424960414.bin"
+    },
+    "PART_40\\1788481292636.jpg": {
+      "part_id": 40,
+      "split": "train",
+      "filename": "1788481292636.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_40\\1788481292636.bin"
+    },
+    "PART_40\\1788481292638.jpg": {
+      "part_id": 40,
+      "split": "train",
+      "filename": "1788481292638.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_40\\1788481292638.bin"
+    },
+    "PART_40\\1788481292640.jpg": {
+      "part_id": 40,
+      "split": "train",
+      "filename": "1788481292640.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_40\\1788481292640.bin"
+    },
+    "PART_40\\1788481292642.jpg": {
+      "part_id": 40,
+      "split": "train",
+      "filename": "1788481292642.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_40\\1788481292642.bin"
+    },
+    "PART_41\\1788481469369.jpg": {
+      "part_id": 41,
+      "split": "train",
+      "filename": "1788481469369.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_41\\1788481469369.bin"
+    },
+    "PART_41\\1788481469370.jpg": {
+      "part_id": 41,
+      "split": "train",
+      "filename": "1788481469370.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_41\\1788481469370.bin"
+    },
+    "PART_42\\1788481654433.jpg": {
+      "part_id": 42,
+      "split": "train",
+      "filename": "1788481654433.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_42\\1788481654433.bin"
+    },
+    "PART_42\\1788481654436.jpg": {
+      "part_id": 42,
+      "split": "train",
+      "filename": "1788481654436.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_42\\1788481654436.bin"
+    },
+    "PART_43\\1788482685709.jpg": {
+      "part_id": 43,
+      "split": "train",
+      "filename": "1788482685709.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_43\\1788482685709.bin"
+    },
+    "PART_43\\1788482685714.jpg": {
+      "part_id": 43,
+      "split": "train",
+      "filename": "1788482685714.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_43\\1788482685714.bin"
+    },
+    "PART_43\\1788482685719.jpg": {
+      "part_id": 43,
+      "split": "train",
+      "filename": "1788482685719.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_43\\1788482685719.bin"
+    },
+    "PART_44\\1788482938671.jpg": {
+      "part_id": 44,
+      "split": "train",
+      "filename": "1788482938671.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_44\\1788482938671.bin"
+    },
+    "PART_44\\1788482938674.jpg": {
+      "part_id": 44,
+      "split": "train",
+      "filename": "1788482938674.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_44\\1788482938674.bin"
+    },
+    "PART_45\\1788483040991.jpg": {
+      "part_id": 45,
+      "split": "train",
+      "filename": "1788483040991.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_45\\1788483040991.bin"
+    },
+    "PART_45\\1788483040997.jpg": {
+      "part_id": 45,
+      "split": "train",
+      "filename": "1788483040997.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_45\\1788483040997.bin"
+    },
+    "PART_46\\1788483651234.jpg": {
+      "part_id": 46,
+      "split": "train",
+      "filename": "1788483651234.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_46\\1788483651234.bin"
+    },
+    "PART_46\\1788483651237.jpg": {
+      "part_id": 46,
+      "split": "train",
+      "filename": "1788483651237.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_46\\1788483651237.bin"
+    },
+    "PART_47\\1788488930423.jpg": {
+      "part_id": 47,
+      "split": "train",
+      "filename": "1788488930423.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_47\\1788488930423.bin"
+    },
+    "PART_47\\1788488930424.jpg": {
+      "part_id": 47,
+      "split": "train",
+      "filename": "1788488930424.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_47\\1788488930424.bin"
+    },
+    "PART_48\\1788518484414.jpg": {
+      "part_id": 48,
+      "split": "train",
+      "filename": "1788518484414.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_48\\1788518484414.bin"
+    },
+    "PART_48\\1788518484416.jpg": {
+      "part_id": 48,
+      "split": "train",
+      "filename": "1788518484416.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_48\\1788518484416.bin"
+    },
+    "PART_49\\1788518826556.jpg": {
+      "part_id": 49,
+      "split": "train",
+      "filename": "1788518826556.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_49\\1788518826556.bin"
+    },
+    "PART_49\\1788518826558.jpg": {
+      "part_id": 49,
+      "split": "train",
+      "filename": "1788518826558.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_49\\1788518826558.bin"
+    },
+    "PART_5\\1788450237355.jpg": {
+      "part_id": 5,
+      "split": "train",
+      "filename": "1788450237355.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_5\\1788450237355.bin"
+    },
+    "PART_5\\1788450237361.jpg": {
+      "part_id": 5,
+      "split": "train",
+      "filename": "1788450237361.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_5\\1788450237361.bin"
+    },
+    "PART_50\\1788519813099.jpg": {
+      "part_id": 50,
+      "split": "train",
+      "filename": "1788519813099.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_50\\1788519813099.bin"
+    },
+    "PART_50\\1788519813105.jpg": {
+      "part_id": 50,
+      "split": "train",
+      "filename": "1788519813105.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_50\\1788519813105.bin"
+    },
+    "PART_50\\1788519813109.jpg": {
+      "part_id": 50,
+      "split": "train",
+      "filename": "1788519813109.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_50\\1788519813109.bin"
+    },
+    "PART_51\\1788521139667.jpg": {
+      "part_id": 51,
+      "split": "train",
+      "filename": "1788521139667.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_51\\1788521139667.bin"
+    },
+    "PART_51\\1788521139669.jpg": {
+      "part_id": 51,
+      "split": "train",
+      "filename": "1788521139669.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_51\\1788521139669.bin"
+    },
+    "PART_52\\1788522053001.jpg": {
+      "part_id": 52,
+      "split": "train",
+      "filename": "1788522053001.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_52\\1788522053001.bin"
+    },
+    "PART_52\\1788522053006.jpg": {
+      "part_id": 52,
+      "split": "train",
+      "filename": "1788522053006.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_52\\1788522053006.bin"
+    },
+    "PART_53\\1788523485192.jpg": {
+      "part_id": 53,
+      "split": "train",
+      "filename": "1788523485192.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_53\\1788523485192.bin"
+    },
+    "PART_53\\1788523485194.jpg": {
+      "part_id": 53,
+      "split": "train",
+      "filename": "1788523485194.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_53\\1788523485194.bin"
+    },
+    "PART_54\\1788539442335.jpg": {
+      "part_id": 54,
+      "split": "train",
+      "filename": "1788539442335.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_54\\1788539442335.bin"
+    },
+    "PART_54\\1788539442339.jpg": {
+      "part_id": 54,
+      "split": "train",
+      "filename": "1788539442339.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_54\\1788539442339.bin"
+    },
+    "PART_55\\1788539526392.jpg": {
+      "part_id": 55,
+      "split": "train",
+      "filename": "1788539526392.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_55\\1788539526392.bin"
+    },
+    "PART_55\\1788539526399.jpg": {
+      "part_id": 55,
+      "split": "train",
+      "filename": "1788539526399.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_55\\1788539526399.bin"
+    },
+    "PART_56\\1788539677631.jpg": {
+      "part_id": 56,
+      "split": "train",
+      "filename": "1788539677631.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_56\\1788539677631.bin"
+    },
+    "PART_56\\1788539677635.jpg": {
+      "part_id": 56,
+      "split": "train",
+      "filename": "1788539677635.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_56\\1788539677635.bin"
+    },
+    "PART_57\\1788540416969.jpg": {
+      "part_id": 57,
+      "split": "train",
+      "filename": "1788540416969.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_57\\1788540416969.bin"
+    },
+    "PART_57\\1788540416972.jpg": {
+      "part_id": 57,
+      "split": "train",
+      "filename": "1788540416972.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_57\\1788540416972.bin"
+    },
+    "PART_58\\1788540785542.jpg": {
+      "part_id": 58,
+      "split": "train",
+      "filename": "1788540785542.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_58\\1788540785542.bin"
+    },
+    "PART_58\\1788540785547.jpg": {
+      "part_id": 58,
+      "split": "train",
+      "filename": "1788540785547.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_58\\1788540785547.bin"
+    },
+    "PART_59\\1788541484657.jpg": {
+      "part_id": 59,
+      "split": "train",
+      "filename": "1788541484657.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_59\\1788541484657.bin"
+    },
+    "PART_59\\1788541484658.jpg": {
+      "part_id": 59,
+      "split": "train",
+      "filename": "1788541484658.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_59\\1788541484658.bin"
+    },
+    "PART_59\\1788541484666.jpg": {
+      "part_id": 59,
+      "split": "train",
+      "filename": "1788541484666.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_59\\1788541484666.bin"
+    },
+    "PART_6\\1788450414647.jpg": {
+      "part_id": 6,
+      "split": "train",
+      "filename": "1788450414647.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_6\\1788450414647.bin"
+    },
+    "PART_6\\1788450414650.jpg": {
+      "part_id": 6,
+      "split": "train",
+      "filename": "1788450414650.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_6\\1788450414650.bin"
+    },
+    "PART_6\\1788450414653.jpg": {
+      "part_id": 6,
+      "split": "train",
+      "filename": "1788450414653.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_6\\1788450414653.bin"
+    },
+    "PART_60\\1788545482510.jpg": {
+      "part_id": 60,
+      "split": "train",
+      "filename": "1788545482510.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_60\\1788545482510.bin"
+    },
+    "PART_60\\1788545482513.jpg": {
+      "part_id": 60,
+      "split": "train",
+      "filename": "1788545482513.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_60\\1788545482513.bin"
+    },
+    "PART_60\\1788545482515.jpg": {
+      "part_id": 60,
+      "split": "train",
+      "filename": "1788545482515.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_60\\1788545482515.bin"
+    },
+    "PART_61\\1788550525586.jpg": {
+      "part_id": 61,
+      "split": "train",
+      "filename": "1788550525586.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_61\\1788550525586.bin"
+    },
+    "PART_61\\1788550525591.jpg": {
+      "part_id": 61,
+      "split": "train",
+      "filename": "1788550525591.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_61\\1788550525591.bin"
+    },
+    "PART_62\\1788609354248.jpg": {
+      "part_id": 62,
+      "split": "train",
+      "filename": "1788609354248.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_62\\1788609354248.bin"
+    },
+    "PART_62\\1788609354257.jpg": {
+      "part_id": 62,
+      "split": "train",
+      "filename": "1788609354257.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_62\\1788609354257.bin"
+    },
+    "PART_62\\1788609354266.jpg": {
+      "part_id": 62,
+      "split": "train",
+      "filename": "1788609354266.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_62\\1788609354266.bin"
+    },
+    "PART_62\\1788609354278.jpg": {
+      "part_id": 62,
+      "split": "train",
+      "filename": "1788609354278.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_62\\1788609354278.bin"
+    },
+    "PART_63\\1788609758185.jpg": {
+      "part_id": 63,
+      "split": "train",
+      "filename": "1788609758185.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_63\\1788609758185.bin"
+    },
+    "PART_63\\1788609758189.jpg": {
+      "part_id": 63,
+      "split": "train",
+      "filename": "1788609758189.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_63\\1788609758189.bin"
+    },
+    "PART_63\\1788609758201.jpg": {
+      "part_id": 63,
+      "split": "train",
+      "filename": "1788609758201.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_63\\1788609758201.bin"
+    },
+    "PART_63\\1788609758203.jpg": {
+      "part_id": 63,
+      "split": "train",
+      "filename": "1788609758203.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_63\\1788609758203.bin"
+    },
+    "PART_64\\1788609937633.jpg": {
+      "part_id": 64,
+      "split": "train",
+      "filename": "1788609937633.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_64\\1788609937633.bin"
+    },
+    "PART_64\\1788609937639.jpg": {
+      "part_id": 64,
+      "split": "train",
+      "filename": "1788609937639.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_64\\1788609937639.bin"
+    },
+    "PART_65\\1788610905051.jpg": {
+      "part_id": 65,
+      "split": "train",
+      "filename": "1788610905051.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_65\\1788610905051.bin"
+    },
+    "PART_65\\1788610905056.jpg": {
+      "part_id": 65,
+      "split": "train",
+      "filename": "1788610905056.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_65\\1788610905056.bin"
+    },
+    "PART_66\\1788611051045.jpg": {
+      "part_id": 66,
+      "split": "train",
+      "filename": "1788611051045.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_66\\1788611051045.bin"
+    },
+    "PART_66\\1788611051048.jpg": {
+      "part_id": 66,
+      "split": "train",
+      "filename": "1788611051048.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_66\\1788611051048.bin"
+    },
+    "PART_66\\1788611051054.jpg": {
+      "part_id": 66,
+      "split": "train",
+      "filename": "1788611051054.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_66\\1788611051054.bin"
+    },
+    "PART_67\\1788611208164.jpg": {
+      "part_id": 67,
+      "split": "train",
+      "filename": "1788611208164.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_67\\1788611208164.bin"
+    },
+    "PART_67\\1788611208168.jpg": {
+      "part_id": 67,
+      "split": "train",
+      "filename": "1788611208168.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_67\\1788611208168.bin"
+    },
+    "PART_68\\1788718744307.jpg": {
+      "part_id": 68,
+      "split": "train",
+      "filename": "1788718744307.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_68\\1788718744307.bin"
+    },
+    "PART_68\\1788718744313.jpg": {
+      "part_id": 68,
+      "split": "train",
+      "filename": "1788718744313.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_68\\1788718744313.bin"
+    },
+    "PART_68\\1788718744326.jpg": {
+      "part_id": 68,
+      "split": "train",
+      "filename": "1788718744326.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_68\\1788718744326.bin"
+    },
+    "PART_68\\1788718744334.jpg": {
+      "part_id": 68,
+      "split": "train",
+      "filename": "1788718744334.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_68\\1788718744334.bin"
+    },
+    "PART_69\\1788719010163.jpg": {
+      "part_id": 69,
+      "split": "train",
+      "filename": "1788719010163.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_69\\1788719010163.bin"
+    },
+    "PART_69\\1788719010190.jpg": {
+      "part_id": 69,
+      "split": "train",
+      "filename": "1788719010190.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_69\\1788719010190.bin"
+    },
+    "PART_69\\1788719010193.jpg": {
+      "part_id": 69,
+      "split": "train",
+      "filename": "1788719010193.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_69\\1788719010193.bin"
+    },
+    "PART_7\\1788451354791.jpg": {
+      "part_id": 7,
+      "split": "train",
+      "filename": "1788451354791.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_7\\1788451354791.bin"
+    },
+    "PART_7\\1788451354795.jpg": {
+      "part_id": 7,
+      "split": "train",
+      "filename": "1788451354795.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_7\\1788451354795.bin"
+    },
+    "PART_70\\1788719100281.jpg": {
+      "part_id": 70,
+      "split": "train",
+      "filename": "1788719100281.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_70\\1788719100281.bin"
+    },
+    "PART_70\\1788719100288.jpg": {
+      "part_id": 70,
+      "split": "train",
+      "filename": "1788719100288.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_70\\1788719100288.bin"
+    },
+    "PART_71\\1788719233395.jpg": {
+      "part_id": 71,
+      "split": "train",
+      "filename": "1788719233395.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_71\\1788719233395.bin"
+    },
+    "PART_71\\1788719233399.jpg": {
+      "part_id": 71,
+      "split": "train",
+      "filename": "1788719233399.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_71\\1788719233399.bin"
+    },
+    "PART_71\\1788719233402.jpg": {
+      "part_id": 71,
+      "split": "train",
+      "filename": "1788719233402.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_71\\1788719233402.bin"
+    },
+    "PART_72\\1788719717719.jpg": {
+      "part_id": 72,
+      "split": "train",
+      "filename": "1788719717719.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_72\\1788719717719.bin"
+    },
+    "PART_72\\1788719717757.jpg": {
+      "part_id": 72,
+      "split": "train",
+      "filename": "1788719717757.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_72\\1788719717757.bin"
+    },
+    "PART_72\\1788719717758.jpg": {
+      "part_id": 72,
+      "split": "train",
+      "filename": "1788719717758.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_72\\1788719717758.bin"
+    },
+    "PART_73\\1788720063741.jpg": {
+      "part_id": 73,
+      "split": "train",
+      "filename": "1788720063741.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_73\\1788720063741.bin"
+    },
+    "PART_73\\1788720063750.jpg": {
+      "part_id": 73,
+      "split": "train",
+      "filename": "1788720063750.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_73\\1788720063750.bin"
+    },
+    "PART_73\\1788720063754.jpg": {
+      "part_id": 73,
+      "split": "train",
+      "filename": "1788720063754.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_73\\1788720063754.bin"
+    },
+    "PART_74\\1788720156290.jpg": {
+      "part_id": 74,
+      "split": "train",
+      "filename": "1788720156290.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_74\\1788720156290.bin"
+    },
+    "PART_74\\1788720156292.jpg": {
+      "part_id": 74,
+      "split": "train",
+      "filename": "1788720156292.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_74\\1788720156292.bin"
+    },
+    "PART_75\\1788725677192.jpg": {
+      "part_id": 75,
+      "split": "train",
+      "filename": "1788725677192.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_75\\1788725677192.bin"
+    },
+    "PART_75\\1788725677194.jpg": {
+      "part_id": 75,
+      "split": "train",
+      "filename": "1788725677194.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_75\\1788725677194.bin"
+    },
+    "PART_75\\1788725677201.jpg": {
+      "part_id": 75,
+      "split": "train",
+      "filename": "1788725677201.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_75\\1788725677201.bin"
+    },
+    "PART_75\\1788725677203.jpg": {
+      "part_id": 75,
+      "split": "train",
+      "filename": "1788725677203.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_75\\1788725677203.bin"
+    },
+    "PART_76\\1788728909178.jpg": {
+      "part_id": 76,
+      "split": "train",
+      "filename": "1788728909178.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_76\\1788728909178.bin"
+    },
+    "PART_76\\1788728909181.jpg": {
+      "part_id": 76,
+      "split": "train",
+      "filename": "1788728909181.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_76\\1788728909181.bin"
+    },
+    "PART_8\\1788451498585.jpg": {
+      "part_id": 8,
+      "split": "train",
+      "filename": "1788451498585.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_8\\1788451498585.bin"
+    },
+    "PART_8\\1788451498588.jpg": {
+      "part_id": 8,
+      "split": "train",
+      "filename": "1788451498588.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_8\\1788451498588.bin"
+    },
+    "PART_9\\1788451850704.jpg": {
+      "part_id": 9,
+      "split": "train",
+      "filename": "1788451850704.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_9\\1788451850704.bin"
+    },
+    "PART_9\\1788451850709.jpg": {
+      "part_id": 9,
+      "split": "train",
+      "filename": "1788451850709.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_9\\1788451850709.bin"
+    },
+    "PART_1\\1788424443738.jpg": {
+      "part_id": 1,
+      "split": "test",
+      "filename": "1788424443738.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_1\\1788424443738.bin"
+    },
+    "PART_1\\1788424443742.jpg": {
+      "part_id": 1,
+      "split": "test",
+      "filename": "1788424443742.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_1\\1788424443742.bin"
+    },
+    "PART_10\\1788451964918.jpg": {
+      "part_id": 10,
+      "split": "test",
+      "filename": "1788451964918.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_10\\1788451964918.bin"
+    },
+    "PART_11\\1788452269929.jpg": {
+      "part_id": 11,
+      "split": "test",
+      "filename": "1788452269929.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_11\\1788452269929.bin"
+    },
+    "PART_11\\1788452269932.jpg": {
+      "part_id": 11,
+      "split": "test",
+      "filename": "1788452269932.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_11\\1788452269932.bin"
+    },
+    "PART_12\\1788455263039.jpg": {
+      "part_id": 12,
+      "split": "test",
+      "filename": "1788455263039.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_12\\1788455263039.bin"
+    },
+    "PART_12\\1788455263044.jpg": {
+      "part_id": 12,
+      "split": "test",
+      "filename": "1788455263044.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_12\\1788455263044.bin"
+    },
+    "PART_13\\1788455879609.jpg": {
+      "part_id": 13,
+      "split": "test",
+      "filename": "1788455879609.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_13\\1788455879609.bin"
+    },
+    "PART_13\\1788455879612.jpg": {
+      "part_id": 13,
+      "split": "test",
+      "filename": "1788455879612.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_13\\1788455879612.bin"
+    },
+    "PART_14\\1788456490727.jpg": {
+      "part_id": 14,
+      "split": "test",
+      "filename": "1788456490727.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_14\\1788456490727.bin"
+    },
+    "PART_14\\1788456490729.jpg": {
+      "part_id": 14,
+      "split": "test",
+      "filename": "1788456490729.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_14\\1788456490729.bin"
+    },
+    "PART_15\\1788456788629.jpg": {
+      "part_id": 15,
+      "split": "test",
+      "filename": "1788456788629.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_15\\1788456788629.bin"
+    },
+    "PART_16\\1788457132530.jpg": {
+      "part_id": 16,
+      "split": "test",
+      "filename": "1788457132530.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_16\\1788457132530.bin"
+    },
+    "PART_16\\1788457132534.jpg": {
+      "part_id": 16,
+      "split": "test",
+      "filename": "1788457132534.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_16\\1788457132534.bin"
+    },
+    "PART_17\\1788457271499.jpg": {
+      "part_id": 17,
+      "split": "test",
+      "filename": "1788457271499.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_17\\1788457271499.bin"
+    },
+    "PART_18\\1788457522917.jpg": {
+      "part_id": 18,
+      "split": "test",
+      "filename": "1788457522917.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_18\\1788457522917.bin"
+    },
+    "PART_18\\1788457522919.jpg": {
+      "part_id": 18,
+      "split": "test",
+      "filename": "1788457522919.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_18\\1788457522919.bin"
+    },
+    "PART_19\\1788457619690.jpg": {
+      "part_id": 19,
+      "split": "test",
+      "filename": "1788457619690.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_19\\1788457619690.bin"
+    },
+    "PART_19\\1788457619693.jpg": {
+      "part_id": 19,
+      "split": "test",
+      "filename": "1788457619693.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_19\\1788457619693.bin"
+    },
+    "PART_2\\1788424613913.jpg": {
+      "part_id": 2,
+      "split": "test",
+      "filename": "1788424613913.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_2\\1788424613913.bin"
+    },
+    "PART_2\\1788424613917.jpg": {
+      "part_id": 2,
+      "split": "test",
+      "filename": "1788424613917.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_2\\1788424613917.bin"
+    },
+    "PART_20\\1788457797494.jpg": {
+      "part_id": 20,
+      "split": "test",
+      "filename": "1788457797494.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_20\\1788457797494.bin"
+    },
+    "PART_20\\1788457797498.jpg": {
+      "part_id": 20,
+      "split": "test",
+      "filename": "1788457797498.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_20\\1788457797498.bin"
+    },
+    "PART_21\\1788457914026.jpg": {
+      "part_id": 21,
+      "split": "test",
+      "filename": "1788457914026.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_21\\1788457914026.bin"
+    },
+    "PART_22\\1788458171722.jpg": {
+      "part_id": 22,
+      "split": "test",
+      "filename": "1788458171722.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_22\\1788458171722.bin"
+    },
+    "PART_22\\1788458171725.jpg": {
+      "part_id": 22,
+      "split": "test",
+      "filename": "1788458171725.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_22\\1788458171725.bin"
+    },
+    "PART_23\\1788458304677.jpg": {
+      "part_id": 23,
+      "split": "test",
+      "filename": "1788458304677.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_23\\1788458304677.bin"
+    },
+    "PART_23\\1788458304680.jpg": {
+      "part_id": 23,
+      "split": "test",
+      "filename": "1788458304680.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_23\\1788458304680.bin"
+    },
+    "PART_24\\1788458395033.jpg": {
+      "part_id": 24,
+      "split": "test",
+      "filename": "1788458395033.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_24\\1788458395033.bin"
+    },
+    "PART_25\\1788458761970.jpg": {
+      "part_id": 25,
+      "split": "test",
+      "filename": "1788458761970.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_25\\1788458761970.bin"
+    },
+    "PART_25\\1788458761971.jpg": {
+      "part_id": 25,
+      "split": "test",
+      "filename": "1788458761971.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_25\\1788458761971.bin"
+    },
+    "PART_26\\1788470896497.jpg": {
+      "part_id": 26,
+      "split": "test",
+      "filename": "1788470896497.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_26\\1788470896497.bin"
+    },
+    "PART_26\\1788470896499.jpg": {
+      "part_id": 26,
+      "split": "test",
+      "filename": "1788470896499.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_26\\1788470896499.bin"
+    },
+    "PART_27\\1788471179764.jpg": {
+      "part_id": 27,
+      "split": "test",
+      "filename": "1788471179764.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_27\\1788471179764.bin"
+    },
+    "PART_28\\1788471435411.jpg": {
+      "part_id": 28,
+      "split": "test",
+      "filename": "1788471435411.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_28\\1788471435411.bin"
+    },
+    "PART_28\\1788471435412.jpg": {
+      "part_id": 28,
+      "split": "test",
+      "filename": "1788471435412.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_28\\1788471435412.bin"
+    },
+    "PART_29\\1788471685919.jpg": {
+      "part_id": 29,
+      "split": "test",
+      "filename": "1788471685919.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_29\\1788471685919.bin"
+    },
+    "PART_3\\1788424793690.jpg": {
+      "part_id": 3,
+      "split": "test",
+      "filename": "1788424793690.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_3\\1788424793690.bin"
+    },
+    "PART_3\\1788424793693.jpg": {
+      "part_id": 3,
+      "split": "test",
+      "filename": "1788424793693.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_3\\1788424793693.bin"
+    },
+    "PART_30\\1788471814152.jpg": {
+      "part_id": 30,
+      "split": "test",
+      "filename": "1788471814152.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_30\\1788471814152.bin"
+    },
+    "PART_31\\1788472053283.jpg": {
+      "part_id": 31,
+      "split": "test",
+      "filename": "1788472053283.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_31\\1788472053283.bin"
+    },
+    "PART_32\\1788472292589.jpg": {
+      "part_id": 32,
+      "split": "test",
+      "filename": "1788472292589.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_32\\1788472292589.bin"
+    },
+    "PART_32\\1788472292590.jpg": {
+      "part_id": 32,
+      "split": "test",
+      "filename": "1788472292590.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_32\\1788472292590.bin"
+    },
+    "PART_33\\1788472468206.jpg": {
+      "part_id": 33,
+      "split": "test",
+      "filename": "1788472468206.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_33\\1788472468206.bin"
+    },
+    "PART_34\\1788474559379.jpg": {
+      "part_id": 34,
+      "split": "test",
+      "filename": "1788474559379.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_34\\1788474559379.bin"
+    },
+    "PART_35\\1788474783656.jpg": {
+      "part_id": 35,
+      "split": "test",
+      "filename": "1788474783656.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_35\\1788474783656.bin"
+    },
+    "PART_35\\1788474783660.jpg": {
+      "part_id": 35,
+      "split": "test",
+      "filename": "1788474783660.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_35\\1788474783660.bin"
+    },
+    "PART_36\\1788475933212.jpg": {
+      "part_id": 36,
+      "split": "test",
+      "filename": "1788475933212.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_36\\1788475933212.bin"
+    },
+    "PART_36\\1788475933218.jpg": {
+      "part_id": 36,
+      "split": "test",
+      "filename": "1788475933218.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_36\\1788475933218.bin"
+    },
+    "PART_37\\1788476195964.jpg": {
+      "part_id": 37,
+      "split": "test",
+      "filename": "1788476195964.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_37\\1788476195964.bin"
+    },
+    "PART_38\\1788477748447.jpg": {
+      "part_id": 38,
+      "split": "test",
+      "filename": "1788477748447.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_38\\1788477748447.bin"
+    },
+    "PART_38\\1788477748449.jpg": {
+      "part_id": 38,
+      "split": "test",
+      "filename": "1788477748449.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_38\\1788477748449.bin"
+    },
+    "PART_39\\1788479972422.jpg": {
+      "part_id": 39,
+      "split": "test",
+      "filename": "1788479972422.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_39\\1788479972422.bin"
+    },
+    "PART_4\\1788424960418.jpg": {
+      "part_id": 4,
+      "split": "test",
+      "filename": "1788424960418.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_4\\1788424960418.bin"
+    },
+    "PART_4\\1788424960421.jpg": {
+      "part_id": 4,
+      "split": "test",
+      "filename": "1788424960421.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_4\\1788424960421.bin"
+    },
+    "PART_40\\1788481292644.jpg": {
+      "part_id": 40,
+      "split": "test",
+      "filename": "1788481292644.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_40\\1788481292644.bin"
+    },
+    "PART_40\\1788481292646.jpg": {
+      "part_id": 40,
+      "split": "test",
+      "filename": "1788481292646.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_40\\1788481292646.bin"
+    },
+    "PART_41\\1788481469375.jpg": {
+      "part_id": 41,
+      "split": "test",
+      "filename": "1788481469375.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_41\\1788481469375.bin"
+    },
+    "PART_42\\1788481654437.jpg": {
+      "part_id": 42,
+      "split": "test",
+      "filename": "1788481654437.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_42\\1788481654437.bin"
+    },
+    "PART_43\\1788482685724.jpg": {
+      "part_id": 43,
+      "split": "test",
+      "filename": "1788482685724.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_43\\1788482685724.bin"
+    },
+    "PART_43\\1788482685725.jpg": {
+      "part_id": 43,
+      "split": "test",
+      "filename": "1788482685725.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_43\\1788482685725.bin"
+    },
+    "PART_44\\1788482938677.jpg": {
+      "part_id": 44,
+      "split": "test",
+      "filename": "1788482938677.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_44\\1788482938677.bin"
+    },
+    "PART_44\\1788482938682.jpg": {
+      "part_id": 44,
+      "split": "test",
+      "filename": "1788482938682.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_44\\1788482938682.bin"
+    },
+    "PART_45\\1788483040998.jpg": {
+      "part_id": 45,
+      "split": "test",
+      "filename": "1788483040998.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_45\\1788483040998.bin"
+    },
+    "PART_46\\1788483651240.jpg": {
+      "part_id": 46,
+      "split": "test",
+      "filename": "1788483651240.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_46\\1788483651240.bin"
+    },
+    "PART_47\\1788488930430.jpg": {
+      "part_id": 47,
+      "split": "test",
+      "filename": "1788488930430.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_47\\1788488930430.bin"
+    },
+    "PART_48\\1788518484417.jpg": {
+      "part_id": 48,
+      "split": "test",
+      "filename": "1788518484417.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_48\\1788518484417.bin"
+    },
+    "PART_48\\1788518484420.jpg": {
+      "part_id": 48,
+      "split": "test",
+      "filename": "1788518484420.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_48\\1788518484420.bin"
+    },
+    "PART_49\\1788518826560.jpg": {
+      "part_id": 49,
+      "split": "test",
+      "filename": "1788518826560.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_49\\1788518826560.bin"
+    },
+    "PART_5\\1788450237372.jpg": {
+      "part_id": 5,
+      "split": "test",
+      "filename": "1788450237372.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_5\\1788450237372.bin"
+    },
+    "PART_5\\1788450237385.jpg": {
+      "part_id": 5,
+      "split": "test",
+      "filename": "1788450237385.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_5\\1788450237385.bin"
+    },
+    "PART_50\\1788519813110.jpg": {
+      "part_id": 50,
+      "split": "test",
+      "filename": "1788519813110.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_50\\1788519813110.bin"
+    },
+    "PART_50\\1788519813118.jpg": {
+      "part_id": 50,
+      "split": "test",
+      "filename": "1788519813118.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_50\\1788519813118.bin"
+    },
+    "PART_51\\1788521139671.jpg": {
+      "part_id": 51,
+      "split": "test",
+      "filename": "1788521139671.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_51\\1788521139671.bin"
+    },
+    "PART_52\\1788522053009.jpg": {
+      "part_id": 52,
+      "split": "test",
+      "filename": "1788522053009.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_52\\1788522053009.bin"
+    },
+    "PART_53\\1788523485199.jpg": {
+      "part_id": 53,
+      "split": "test",
+      "filename": "1788523485199.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_53\\1788523485199.bin"
+    },
+    "PART_53\\1788523485202.jpg": {
+      "part_id": 53,
+      "split": "test",
+      "filename": "1788523485202.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_53\\1788523485202.bin"
+    },
+    "PART_54\\1788539442345.jpg": {
+      "part_id": 54,
+      "split": "test",
+      "filename": "1788539442345.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_54\\1788539442345.bin"
+    },
+    "PART_55\\1788539526400.jpg": {
+      "part_id": 55,
+      "split": "test",
+      "filename": "1788539526400.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_55\\1788539526400.bin"
+    },
+    "PART_55\\1788539526419.jpg": {
+      "part_id": 55,
+      "split": "test",
+      "filename": "1788539526419.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_55\\1788539526419.bin"
+    },
+    "PART_56\\1788539677638.jpg": {
+      "part_id": 56,
+      "split": "test",
+      "filename": "1788539677638.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_56\\1788539677638.bin"
+    },
+    "PART_56\\1788539677639.jpg": {
+      "part_id": 56,
+      "split": "test",
+      "filename": "1788539677639.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_56\\1788539677639.bin"
+    },
+    "PART_57\\1788540416975.jpg": {
+      "part_id": 57,
+      "split": "test",
+      "filename": "1788540416975.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_57\\1788540416975.bin"
+    },
+    "PART_58\\1788540785549.jpg": {
+      "part_id": 58,
+      "split": "test",
+      "filename": "1788540785549.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_58\\1788540785549.bin"
+    },
+    "PART_59\\1788541484668.jpg": {
+      "part_id": 59,
+      "split": "test",
+      "filename": "1788541484668.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_59\\1788541484668.bin"
+    },
+    "PART_59\\1788541484672.jpg": {
+      "part_id": 59,
+      "split": "test",
+      "filename": "1788541484672.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_59\\1788541484672.bin"
+    },
+    "PART_6\\1788450414658.jpg": {
+      "part_id": 6,
+      "split": "test",
+      "filename": "1788450414658.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_6\\1788450414658.bin"
+    },
+    "PART_6\\1788450414666.jpg": {
+      "part_id": 6,
+      "split": "test",
+      "filename": "1788450414666.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_6\\1788450414666.bin"
+    },
+    "PART_60\\1788545482521.jpg": {
+      "part_id": 60,
+      "split": "test",
+      "filename": "1788545482521.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_60\\1788545482521.bin"
+    },
+    "PART_60\\1788545482523.jpg": {
+      "part_id": 60,
+      "split": "test",
+      "filename": "1788545482523.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_60\\1788545482523.bin"
+    },
+    "PART_61\\1788550525593.jpg": {
+      "part_id": 61,
+      "split": "test",
+      "filename": "1788550525593.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_61\\1788550525593.bin"
+    },
+    "PART_62\\1788609354282.jpg": {
+      "part_id": 62,
+      "split": "test",
+      "filename": "1788609354282.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_62\\1788609354282.bin"
+    },
+    "PART_62\\1788609354293.jpg": {
+      "part_id": 62,
+      "split": "test",
+      "filename": "1788609354293.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_62\\1788609354293.bin"
+    },
+    "PART_63\\1788609758207.jpg": {
+      "part_id": 63,
+      "split": "test",
+      "filename": "1788609758207.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_63\\1788609758207.bin"
+    },
+    "PART_63\\1788609758215.jpg": {
+      "part_id": 63,
+      "split": "test",
+      "filename": "1788609758215.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_63\\1788609758215.bin"
+    },
+    "PART_64\\1788609937640.jpg": {
+      "part_id": 64,
+      "split": "test",
+      "filename": "1788609937640.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_64\\1788609937640.bin"
+    },
+    "PART_64\\1788609937644.jpg": {
+      "part_id": 64,
+      "split": "test",
+      "filename": "1788609937644.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_64\\1788609937644.bin"
+    },
+    "PART_65\\1788610905058.jpg": {
+      "part_id": 65,
+      "split": "test",
+      "filename": "1788610905058.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_65\\1788610905058.bin"
+    },
+    "PART_65\\1788610905060.jpg": {
+      "part_id": 65,
+      "split": "test",
+      "filename": "1788610905060.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_65\\1788610905060.bin"
+    },
+    "PART_66\\1788611051058.jpg": {
+      "part_id": 66,
+      "split": "test",
+      "filename": "1788611051058.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_66\\1788611051058.bin"
+    },
+    "PART_66\\1788611051059.jpg": {
+      "part_id": 66,
+      "split": "test",
+      "filename": "1788611051059.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_66\\1788611051059.bin"
+    },
+    "PART_67\\1788611208171.jpg": {
+      "part_id": 67,
+      "split": "test",
+      "filename": "1788611208171.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_67\\1788611208171.bin"
+    },
+    "PART_67\\1788611208172.jpg": {
+      "part_id": 67,
+      "split": "test",
+      "filename": "1788611208172.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_67\\1788611208172.bin"
+    },
+    "PART_68\\1788718744344.jpg": {
+      "part_id": 68,
+      "split": "test",
+      "filename": "1788718744344.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_68\\1788718744344.bin"
+    },
+    "PART_68\\1788718744349.jpg": {
+      "part_id": 68,
+      "split": "test",
+      "filename": "1788718744349.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_68\\1788718744349.bin"
+    },
+    "PART_69\\1788719010204.jpg": {
+      "part_id": 69,
+      "split": "test",
+      "filename": "1788719010204.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_69\\1788719010204.bin"
+    },
+    "PART_69\\1788719010214.jpg": {
+      "part_id": 69,
+      "split": "test",
+      "filename": "1788719010214.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_69\\1788719010214.bin"
+    },
+    "PART_7\\1788451354802.jpg": {
+      "part_id": 7,
+      "split": "test",
+      "filename": "1788451354802.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_7\\1788451354802.bin"
+    },
+    "PART_7\\1788451354824.jpg": {
+      "part_id": 7,
+      "split": "test",
+      "filename": "1788451354824.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_7\\1788451354824.bin"
+    },
+    "PART_70\\1788719100290.jpg": {
+      "part_id": 70,
+      "split": "test",
+      "filename": "1788719100290.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_70\\1788719100290.bin"
+    },
+    "PART_70\\1788719100298.jpg": {
+      "part_id": 70,
+      "split": "test",
+      "filename": "1788719100298.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_70\\1788719100298.bin"
+    },
+    "PART_71\\1788719233405.jpg": {
+      "part_id": 71,
+      "split": "test",
+      "filename": "1788719233405.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_71\\1788719233405.bin"
+    },
+    "PART_71\\1788719233408.jpg": {
+      "part_id": 71,
+      "split": "test",
+      "filename": "1788719233408.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_71\\1788719233408.bin"
+    },
+    "PART_72\\1788719717762.jpg": {
+      "part_id": 72,
+      "split": "test",
+      "filename": "1788719717762.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_72\\1788719717762.bin"
+    },
+    "PART_72\\1788719717763.jpg": {
+      "part_id": 72,
+      "split": "test",
+      "filename": "1788719717763.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_72\\1788719717763.bin"
+    },
+    "PART_73\\1788720063761.jpg": {
+      "part_id": 73,
+      "split": "test",
+      "filename": "1788720063761.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_73\\1788720063761.bin"
+    },
+    "PART_73\\1788720063762.jpg": {
+      "part_id": 73,
+      "split": "test",
+      "filename": "1788720063762.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_73\\1788720063762.bin"
+    },
+    "PART_74\\1788720156299.jpg": {
+      "part_id": 74,
+      "split": "test",
+      "filename": "1788720156299.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_74\\1788720156299.bin"
+    },
+    "PART_74\\1788720156309.jpg": {
+      "part_id": 74,
+      "split": "test",
+      "filename": "1788720156309.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_74\\1788720156309.bin"
+    },
+    "PART_75\\1788725677219.jpg": {
+      "part_id": 75,
+      "split": "test",
+      "filename": "1788725677219.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_75\\1788725677219.bin"
+    },
+    "PART_75\\1788725677220.jpg": {
+      "part_id": 75,
+      "split": "test",
+      "filename": "1788725677220.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_75\\1788725677220.bin"
+    },
+    "PART_76\\1788728909185.jpg": {
+      "part_id": 76,
+      "split": "test",
+      "filename": "1788728909185.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_76\\1788728909185.bin"
+    },
+    "PART_8\\1788451498594.jpg": {
+      "part_id": 8,
+      "split": "test",
+      "filename": "1788451498594.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_8\\1788451498594.bin"
+    },
+    "PART_8\\1788451498606.jpg": {
+      "part_id": 8,
+      "split": "test",
+      "filename": "1788451498606.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_8\\1788451498606.bin"
+    },
+    "PART_9\\1788451850719.jpg": {
+      "part_id": 9,
+      "split": "test",
+      "filename": "1788451850719.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_9\\1788451850719.bin"
+    },
+    "PART_9\\1788451850726.jpg": {
+      "part_id": 9,
+      "split": "test",
+      "filename": "1788451850726.jpg",
+      "embedding_file": "spare_parts_dataset\\embeddings\\PART_9\\1788451850726.bin"
+    }
+  },
+  "failures": []
+}

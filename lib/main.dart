@@ -1,6 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:gestion_piece_de_rechange/screens/login_page.dart';
-import 'package:gestion_piece_de_rechange/services/image_classifier_service.dart';
 import 'package:gestion_piece_de_rechange/services/mlkit_translation_service.dart';
 import 'package:gestion_piece_de_rechange/services/safety_stock_service.dart';
 import 'package:gestion_piece_de_rechange/utils/app_utils.dart';
@@ -9,11 +8,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await loadHistory();
   await SafetyStockService.loadDelais();
-  if (ImageClassifierService.isPlatformSupported) {
-    try {
-      await imageClassifierService.load();
-    } catch (_) {}
-  }
   runApp(const STBGApp());
 }
 

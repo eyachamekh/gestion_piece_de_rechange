@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -26,20 +27,44 @@ const db = mysql.createConnection({
   host: "localhost",
   user: "root",
   password: "",
-  database: "piece_de_rechange",
+  database: "piece_de_rechanges",
 });
 
 // LOGIN WITH JWT
 app.post("/api/login", (req, res) => {
   const { email, password } = req.body;
   db.query(
-    "SELECT * FROM users WHERE email=? AND password=?",
-    [email, password],
+    "SELECT * FROM users WHERE email=? LIMIT 1",
+    [email],
     (err, results) => {
-      if (err || !results || results.length === 0) return res.status(401).json({ success: false });
+      if (err) return res.status(500).json({ success: false, error: err.message });
+      if (!results || results.length === 0) {
+        return res.status(401).json({ success: false });
+      }
       const user = results[0];
-      const token = jwt.sign({ id: user.id, role: user.role }, SECRET, { expiresIn: "24h" });
-      res.json({ success: true, token, role: user.role });
+      const storedPassword = String(user.password || "");
+      const isHash = /^\$2[aby]\$\d{2}\$/.test(storedPassword);
+      const finishLogin = () => {
+        const token = jwt.sign({ id: user.id, role: user.role }, SECRET, { expiresIn: "24h" });
+        res.json({ success: true, token, role: user.role });
+      };
+      if (isHash) {
+        return bcrypt.compare(password, storedPassword, (compareErr, valid) => {
+          if (compareErr) return res.status(500).json({ success: false });
+          if (!valid) return res.status(401).json({ success: false });
+          finishLogin();
+        });
+      }
+      if (storedPassword !== password) {
+        return res.status(401).json({ success: false });
+      }
+      bcrypt.hash(password, 12, (hashErr, hash) => {
+        if (hashErr) return res.status(500).json({ success: false });
+        db.query("UPDATE users SET password=? WHERE id=?", [hash, user.id], (updateErr) => {
+          if (updateErr) return res.status(500).json({ success: false });
+          finishLogin();
+        });
+      });
     }
   );
 });
@@ -60,6 +85,51 @@ function verifyToken(req, res, next) {
 app.get("/api/parts", verifyToken, (req, res) => {
   db.query("SELECT * FROM parts", (err, results) => {
     res.json(results);
+  });
+});
+
+function normalizeReferenceValue(value) {
+  return String(value || '')
+    .toUpperCase()
+    .trim()
+    .replace(/[^A-Z0-9]/g, '');
+}
+
+//  SEARCH PARTS BY REFERENCE (exact then partial)
+app.get("/api/parts/search-reference", verifyToken, (req, res) => {
+  const rawReference = (req.query.reference || '').toString().trim();
+  if (!rawReference) {
+    return res.status(400).json({ error: 'reference query param is required' });
+  }
+
+  const normalizedReference = normalizeReferenceValue(rawReference);
+  if (!normalizedReference) {
+    return res.status(400).json({ error: 'reference query param is required' });
+  }
+
+  const exactSql = `
+    SELECT *
+    FROM parts
+    WHERE UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(reference, ''), ' ', ''), '-', ''), '.', ''), '/', ''), '_', '')) = ?
+    LIMIT 1
+  `;
+
+  db.query(exactSql, [normalizedReference], (err, exactRows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    if (exactRows && exactRows.length > 0) {
+      return res.json({ exact: true, results: exactRows });
+    }
+
+    const partialSql = `
+      SELECT *
+      FROM parts
+      WHERE UPPER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(COALESCE(reference, ''), ' ', ''), '-', ''), '.', ''), '/', ''), '_', '')) LIKE ?
+      LIMIT 50
+    `;
+    db.query(partialSql, ['%' + normalizedReference + '%'], (err2, rows) => {
+      if (err2) return res.status(500).json({ error: err2.message });
+      return res.json({ exact: false, results: rows });
+    });
   });
 });
 

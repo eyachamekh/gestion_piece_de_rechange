@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_translation/google_mlkit_translation.dart';
 import 'package:translator/translator.dart' as web_translator;
@@ -23,7 +25,8 @@ class MLKitTranslationService {
   final ValueNotifier<bool> isDownloadingModel = ValueNotifier<bool>(false);
   final ValueNotifier<int> translationVersion = ValueNotifier<int>(0);
 
-  bool _isMlKitSupported = !kIsWeb;
+  bool _isMlKitSupported =
+      !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
   TranslateLanguage _mapCodeToLanguage(String langCode) {
     switch (langCode.toLowerCase()) {
@@ -147,7 +150,7 @@ class MLKitTranslationService {
 
   // Dynamically translates all registered UI keys using Google ML Kit when language changes
   Future<void> preTranslateAllKeys(String targetLang, [List<String>? customKeys]) async {
-    if (targetLang == 'en') return;
+    if (targetLang == 'en' || !_isMlKitSupported) return;
 
     // Download Google ML Kit language model on device if required
     await ensureModelDownloaded(targetLang);

@@ -39,6 +39,24 @@ class YoloService {
 
   Interpreter? _interpreter;
   bool _isLoaded = false;
+  int _numberOfClasses = 0;
+  bool _isGenericCocoModel = false;
+
+  static const _cocoClassNames = <String>[
+    'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus', 'train',
+    'truck', 'boat', 'traffic light', 'fire hydrant', 'stop sign',
+    'parking meter', 'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow',
+    'elephant', 'bear', 'zebra', 'giraffe', 'backpack', 'umbrella',
+    'handbag', 'tie', 'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball',
+    'kite', 'baseball bat', 'baseball glove', 'skateboard', 'surfboard',
+    'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon',
+    'bowl', 'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot',
+    'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch', 'potted plant',
+    'bed', 'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
+    'keyboard', 'cell phone', 'microwave', 'oven', 'toaster', 'sink',
+    'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear',
+    'hair drier', 'toothbrush',
+  ];
 
   static bool get isPlatformSupported {
     if (kIsWeb) return false;
@@ -61,7 +79,29 @@ class YoloService {
     try {
       _interpreter = await Interpreter.fromAsset(modelAsset);
       _isLoaded = true;
-      print("YOLO model loaded successfully.");
+      final input = _interpreter!.getInputTensor(0);
+      final output = _interpreter!.getOutputTensor(0);
+      final outputElements = output.shape.length == 3
+          ? (output.shape[1] < output.shape[2]
+          ? output.shape[1]
+          : output.shape[2])
+          : 0;
+      _numberOfClasses = outputElements > 5 ? outputElements - 4 : 0;
+      _isGenericCocoModel = _numberOfClasses == _cocoClassNames.length;
+      print('========== YOLO MODEL ==========');
+      print('Model: $modelAsset');
+      print('Input shape: ${input.shape}');
+      print('Input type: ${input.type}');
+      print('Output shape: ${output.shape}');
+      print('Output type: ${output.type}');
+      print('Number of classes: $_numberOfClasses');
+      print(
+        'Class names: ${_isGenericCocoModel ? 'COCO-80 (generic)' : 'unknown/not COCO-80'}',
+      );
+      if (_isGenericCocoModel) {
+        print('THIS MODEL IS NOT A SPARE-PART MODEL.');
+      }
+      print('=================================');
     } catch (e) {
       print("Failed to load YOLO model: $e");
       // Keep _isLoaded = false, we will check it before running
@@ -83,16 +123,26 @@ class YoloService {
       throw StateError('Could not decode image.');
     }
 
-    // Resize image to 640x640
+    final scale = math.min(
+      inputSize / decoded.width,
+      inputSize / decoded.height,
+    );
+    final resizedWidth = (decoded.width * scale).round();
+    final resizedHeight = (decoded.height * scale).round();
     final resized = img.copyResize(
       decoded,
-      width: inputSize,
-      height: inputSize,
+      width: resizedWidth,
+      height: resizedHeight,
       interpolation: img.Interpolation.linear,
     );
+    final letterboxed = img.Image(width: inputSize, height: inputSize);
+    img.fill(letterboxed, color: img.ColorRgb8(114, 114, 114));
+    final padX = ((inputSize - resizedWidth) / 2).round();
+    final padY = ((inputSize - resizedHeight) / 2).round();
+    img.compositeImage(letterboxed, resized, dstX: padX, dstY: padY);
 
     // Build float input buffer [1, 640, 640, 3]
-    final input = _buildInput(resized);
+    final input = _buildInput(letterboxed);
 
     // Check outputs
     final outputTensor = _interpreter!.getOutputTensor(0);
@@ -192,15 +242,24 @@ class YoloService {
         // Detect if coordinates are already normalized
         final bool areCoordsPixel = xCenter > 2.0 || w > 2.0;
         final double divisor = areCoordsPixel ? inputSize.toDouble() : 1.0;
+        final boxX = (xCenter - w / 2.0) / divisor;
+        final boxY = (yCenter - h / 2.0) / divisor;
+        final boxWidth = w / divisor;
+        final boxHeight = h / divisor;
+        final x1 = ((boxX * inputSize - padX) / resizedWidth)
+            .clamp(0.0, 1.0);
+        final y1 = ((boxY * inputSize - padY) / resizedHeight)
+            .clamp(0.0, 1.0);
+        final x2 = (((boxX + boxWidth) * inputSize - padX) / resizedWidth)
+            .clamp(0.0, 1.0);
+        final y2 = (((boxY + boxHeight) * inputSize - padY) / resizedHeight)
+            .clamp(0.0, 1.0);
 
-        final double x1 = ((xCenter - w / 2.0) / divisor).clamp(0.0, 1.0);
-        final double y1 = ((yCenter - h / 2.0) / divisor).clamp(0.0, 1.0);
-        final double x2 = ((xCenter + w / 2.0) / divisor).clamp(0.0, 1.0);
-        final double y2 = ((yCenter + h / 2.0) / divisor).clamp(0.0, 1.0);
+        final label = bestClassId < _cocoClassNames.length
+            ? _cocoClassNames[bestClassId]
+            : 'unknown-class-$bestClassId';
 
-        final label = 'Part ${bestClassId + 1}';
-
-        candidates.add(Prediction(
+        final prediction = Prediction(
           x1: x1,
           y1: y1,
           x2: x2,
@@ -208,7 +267,14 @@ class YoloService {
           score: confidence,
           classId: bestClassId,
           label: label,
-        ));
+        );
+        candidates.add(prediction);
+        print(
+          'YOLO detection: classId=${prediction.classId} '
+          'className=${prediction.label} confidence=${prediction.score} '
+          'x=${prediction.x1} y=${prediction.y1} '
+          'width=${prediction.width} height=${prediction.height}',
+        );
       }
     }
 

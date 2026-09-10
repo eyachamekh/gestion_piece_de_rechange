@@ -67,6 +67,7 @@ flutter:
   assets:
     - assets/images/
     - assets/ml/
+    - assets/ml/gallery_manifest.json
     - assets/data/
 
   # The following line ensures that the Material Icons font is

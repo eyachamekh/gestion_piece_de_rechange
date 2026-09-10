@@ -57,6 +57,17 @@ add_subdirectory("runner")
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+# Some third-party Windows plugins trigger MSVC SDK warnings that are promoted
+# to errors by the default Flutter project settings.
+if(MSVC)
+  if(TARGET flutter_ocr_native_plugin)
+    target_compile_options(flutter_ocr_native_plugin PRIVATE /WX- /wd4458)
+  endif()
+  if(TARGET jni)
+    target_compile_options(jni PRIVATE /WX- /wd4090)
+  endif()
+endif()
+
 
 # === Installation ===
 # Support files are copied into place next to the executable, so that it can

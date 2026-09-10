@@ -7,8 +7,9 @@ import 'package:gestion_piece_de_rechange/utils/app_utils.dart';
 class OrderAlertBanner extends StatelessWidget {
   final List<SafetyStockResult> alerts;
   final VoidCallback? onDismiss;
+  final void Function(SafetyStockResult)? onTapAlert;
 
-  const OrderAlertBanner({required this.alerts, this.onDismiss, super.key});
+  const OrderAlertBanner({required this.alerts, this.onDismiss, this.onTapAlert, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +89,9 @@ class OrderAlertBanner extends StatelessWidget {
                         const Divider(height: 1, indent: 14, endIndent: 14, color: Color(0x22E8A400)),
                     itemBuilder: (_, i) {
                       final a = alerts[i];
-                      return Padding(
+                      return GestureDetector(
+                        onTap: onTapAlert != null ? () => onTapAlert!(a) : null,
+                        child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                         child: Row(
                           children: [
@@ -113,9 +116,10 @@ class OrderAlertBanner extends StatelessWidget {
                               color: const Color(0xFF1B8A5A),
                               icon: Icons.schedule_rounded,
                             ),
+                            if (onTapAlert != null) ...[const SizedBox(width: 6), const Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFFAA7000))],
                           ],
                         ),
-                      );
+                      ));
                     },
                   ),
                   // Footer

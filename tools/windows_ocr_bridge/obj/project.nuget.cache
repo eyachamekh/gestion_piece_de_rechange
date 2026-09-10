@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "YtL++tqFnPw=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Lenovo\\Desktop\\gestion_piece_de_rechange\\tools\\windows_ocr_bridge\\WindowsOcrBridge.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Lenovo\\.nuget\\packages\\microsoft.windows.sdk.net.ref\\10.0.19041.57\\microsoft.windows.sdk.net.ref.10.0.19041.57.nupkg.sha512"
+  ],
+  "logs": []
+}

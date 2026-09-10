@@ -15,13 +15,9 @@ String t(String key) {
 }
 
 void toggleLanguage() {
-  if (langNotifier.value == 'en') {
-    langNotifier.value = 'fr';
-  } else if (langNotifier.value == 'fr') {
-    langNotifier.value = 'ar';
-  } else {
-    langNotifier.value = 'en';
-  }
+  final next = langNotifier.value == 'en' ? 'fr' : langNotifier.value == 'fr' ? 'ar' : 'en';
+  langNotifier.value = next;
+  MLKitTranslationService.instance.preTranslateAllKeys(next);
 }
 
 class TranslatedText extends StatelessWidget {

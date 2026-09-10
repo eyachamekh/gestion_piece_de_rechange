@@ -10,9 +10,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:gestion_piece_de_rechange/config/api_config.dart';
-import 'package:gestion_piece_de_rechange/screens/history_page.dart';
 import 'package:gestion_piece_de_rechange/screens/result_page.dart';
 import 'package:gestion_piece_de_rechange/services/api_service.dart';
+import 'package:gestion_piece_de_rechange/services/auth_headers.dart';
 import 'package:gestion_piece_de_rechange/services/image_classifier_service.dart';
 import 'package:gestion_piece_de_rechange/services/mlkit_translation_service.dart';
 import 'package:gestion_piece_de_rechange/services/safety_stock_service.dart';
@@ -20,6 +20,7 @@ import 'package:gestion_piece_de_rechange/models/safety_stock_result.dart';
 import 'package:gestion_piece_de_rechange/utils/app_utils.dart';
 import 'package:gestion_piece_de_rechange/widgets/order_alert_banner.dart';
 import 'package:gestion_piece_de_rechange/widgets/shared_widgets.dart';
+import 'package:gestion_piece_de_rechange/widgets/custom_bottom_navigation_bar.dart';
 
 class ListPage extends StatefulWidget {
   final String token;
@@ -37,6 +38,20 @@ class _ListPageState extends State<ListPage> {
   List<SafetyStockResult> _orderAlerts = [];
   bool _bannerDismissed = false;
   bool loading = true;
+  static const int _pageSize = 15;
+  int _currentPage = 0;
+
+  int get _pageCount =>
+      filteredList.isEmpty ? 1 : (filteredList.length / _pageSize).ceil();
+
+  List get _pageItems {
+    final start = _currentPage * _pageSize;
+    final safeStart = start > filteredList.length ? filteredList.length : start;
+    final end = start + _pageSize > filteredList.length
+        ? filteredList.length
+        : start + _pageSize;
+    return filteredList.sublist(safeStart, end);
+  }
 
   @override
   void initState() {
@@ -49,7 +64,7 @@ class _ListPageState extends State<ListPage> {
     try {
       final res = await http.get(
         Uri.parse(ApiConfig.url('/api/activities')),
-        headers: authHeaders(widget.token),
+        headers: makeAuthHeaders(widget.token),
       );
       if (res.statusCode == 200) _activities = jsonDecode(res.body);
     } catch (_) {}
@@ -62,6 +77,7 @@ class _ListPageState extends State<ListPage> {
     setState(() {
       allParts = data;
       filteredList = data;
+      _currentPage = 0;
       _orderAlerts = alerts;
       _bannerDismissed = false;
       loading = false;
@@ -98,11 +114,14 @@ class _ListPageState extends State<ListPage> {
     if (confirmed != true) return;
     await http.delete(
       Uri.parse(ApiConfig.url('/api/parts/$id')),
-      headers: authHeaders(widget.token),
+      headers: makeAuthHeaders(widget.token),
     );
     setState(() {
       allParts.removeWhere((p) => p['id'] == id);
       filteredList.removeWhere((p) => p['id'] == id);
+      if (_currentPage > 0 && _currentPage >= _pageCount) {
+        _currentPage = _pageCount - 1;
+      }
     });
   }
 
@@ -110,7 +129,7 @@ class _ListPageState extends State<ListPage> {
     final refCtrl = TextEditingController();
     final locCtrl = TextEditingController();
     final qtyCtrl = TextEditingController();
-    final List<File?> images = [null, null, null];
+    final List<File?> images = List<File?>.filled(7, null);
     final picker = ImagePicker();
 
     Future<ImageSource?> pickSource() async {
@@ -214,7 +233,9 @@ class _ListPageState extends State<ListPage> {
                           onTap: () async {
                             final source = await pickSource();
                             if (source == null) return;
-                            final picked = await picker.pickImage(source: source);
+                            final picked = await picker.pickImage(
+                              source: source,
+                            );
                             if (picked != null) {
                               setD(() => images[i] = File(picked.path));
                             }
@@ -253,7 +274,7 @@ class _ListPageState extends State<ListPage> {
                                     behavior: HitTestBehavior.opaque,
                                     onTap: () {
                                       if (images.length <= 3) return;
-                                      setD(() => images.removeAt(i));
+                                      setD(() => images[i] = null);
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
@@ -344,7 +365,9 @@ class _ListPageState extends State<ListPage> {
                       ),
                     );
                     try {
-                      final emb = await imageClassifierService.getEmbedding(image);
+                      final emb = await imageClassifierService.getEmbedding(
+                        image,
+                      );
                       req.fields['embedding${i + 1}'] = jsonEncode(emb);
                     } catch (e) {
                       debugPrint('Embedding calculation error: $e');
@@ -368,7 +391,7 @@ class _ListPageState extends State<ListPage> {
     final refCtrl = TextEditingController(text: item['reference'] ?? '');
     final locCtrl = TextEditingController(text: item['location'] ?? '');
     final qtyCtrl = TextEditingController(text: item['quantity'].toString());
-    final List<XFile?> newImages = [null, null, null];
+    final List<XFile?> newImages = List<XFile?>.filled(7, null);
     final picker = ImagePicker();
 
     Future<ImageSource?> pickSource() async {
@@ -411,17 +434,32 @@ class _ListPageState extends State<ListPage> {
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (ctx, setD) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
           title: const TranslatedText('Edit Part'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                DialogField(ctrl: refCtrl, label: t('Reference'), icon: Icons.tag_rounded),
+                DialogField(
+                  ctrl: refCtrl,
+                  label: t('Reference'),
+                  icon: Icons.tag_rounded,
+                ),
                 const SizedBox(height: 10),
-                DialogField(ctrl: locCtrl, label: t('Location'), icon: Icons.location_on_outlined),
+                DialogField(
+                  ctrl: locCtrl,
+                  label: t('Location'),
+                  icon: Icons.location_on_outlined,
+                ),
                 const SizedBox(height: 10),
-                DialogField(ctrl: qtyCtrl, label: t('Quantity'), icon: Icons.numbers_rounded, numeric: true),
+                DialogField(
+                  ctrl: qtyCtrl,
+                  label: t('Quantity'),
+                  icon: Icons.numbers_rounded,
+                  numeric: true,
+                ),
                 const SizedBox(height: 16),
                 Wrap(
                   spacing: 8,
@@ -435,7 +473,9 @@ class _ListPageState extends State<ListPage> {
                           onTap: () async {
                             final source = await pickSource();
                             if (source == null) return;
-                            final picked = await picker.pickImage(source: source);
+                            final picked = await picker.pickImage(
+                              source: source,
+                            );
                             if (picked != null) {
                               setD(() => newImages[i] = picked);
                             }
@@ -446,10 +486,14 @@ class _ListPageState extends State<ListPage> {
                                 decoration: BoxDecoration(
                                   color: STBG.surface,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: STBG.steel.withOpacity(0.25)),
+                                  border: Border.all(
+                                    color: STBG.steel.withOpacity(0.25),
+                                  ),
                                   image: newImages[i] != null
                                       ? DecorationImage(
-                                          image: FileImage(File(newImages[i]!.path)),
+                                          image: FileImage(
+                                            File(newImages[i]!.path),
+                                          ),
                                           fit: BoxFit.cover,
                                         )
                                       : null,
@@ -472,7 +516,7 @@ class _ListPageState extends State<ListPage> {
                                     behavior: HitTestBehavior.opaque,
                                     onTap: () {
                                       if (newImages.length <= 3) return;
-                                      setD(() => newImages.removeAt(i));
+                                      setD(() => newImages[i] = null);
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
@@ -507,7 +551,11 @@ class _ListPageState extends State<ListPage> {
                               ),
                             ),
                             child: const Center(
-                              child: Icon(Icons.add, color: STBG.steel, size: 28),
+                              child: Icon(
+                                Icons.add,
+                                color: STBG.steel,
+                                size: 28,
+                              ),
                             ),
                           ),
                         ),
@@ -518,14 +566,21 @@ class _ListPageState extends State<ListPage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const TranslatedText('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const TranslatedText('Cancel'),
+            ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: STBG.navy,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               onPressed: () async {
-                final uri = Uri.parse(ApiConfig.url('/api/parts/${item['id']}'));
+                final uri = Uri.parse(
+                  ApiConfig.url('/api/parts/${item['id']}'),
+                );
                 final req = http.MultipartRequest('PUT', uri)
                   ..headers['Authorization'] = 'Bearer ${widget.token}'
                   ..fields['reference'] = refCtrl.text
@@ -534,9 +589,16 @@ class _ListPageState extends State<ListPage> {
                 for (int i = 0; i < newImages.length; i++) {
                   final image = newImages[i];
                   if (image != null) {
-                    req.files.add(await http.MultipartFile.fromPath('image${i + 1}', image.path));
+                    req.files.add(
+                      await http.MultipartFile.fromPath(
+                        'image${i + 1}',
+                        image.path,
+                      ),
+                    );
                     try {
-                      final emb = await imageClassifierService.getEmbedding(File(image.path));
+                      final emb = await imageClassifierService.getEmbedding(
+                        File(image.path),
+                      );
                       req.fields['embedding${i + 1}'] = jsonEncode(emb);
                     } catch (e) {
                       debugPrint('Embedding calculation error: $e');
@@ -917,7 +979,7 @@ class _ListPageState extends State<ListPage> {
 
     final res = await http.get(
       Uri.parse(ApiConfig.url('/api/export?from=$fromStr&to=$toStr')),
-      headers: authHeaders(widget.token),
+      headers: makeAuthHeaders(widget.token),
     );
     if (res.statusCode != 200) {
       if (!mounted) return;
@@ -1134,36 +1196,10 @@ class _ListPageState extends State<ListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: STBG.surface,
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
+      body: Stack(
         children: [
-          FloatingActionButton.small(
-            heroTag: 'export',
-            onPressed: () => _showExportSheet(context),
-            backgroundColor: STBG.success,
-            child: const Icon(Icons.download_rounded, color: Colors.white),
-          ),
-          const SizedBox(height: 10),
-          FloatingActionButton.small(
-            heroTag: 'history',
-            onPressed: () => Navigator.push(
-              context,
-              createRoute(HistoryPage(history: appHistory)),
-            ),
-            backgroundColor: STBG.gold,
-            child: const Icon(Icons.history_rounded, color: Colors.white),
-          ),
-          const SizedBox(height: 10),
-          FloatingActionButton(
-            heroTag: 'add',
-            onPressed: _showAddDialog,
-            backgroundColor: STBG.navy,
-            child: const Icon(Icons.add_rounded, color: Colors.white),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
+          Column(
+            children: [
           Container(
             decoration: const BoxDecoration(
               gradient: STBG.headerGradient,
@@ -1176,82 +1212,99 @@ class _ListPageState extends State<ListPage> {
                 ),
               ],
             ),
-            padding: const EdgeInsets.fromLTRB(22, 54, 22, 20),
+            padding: const EdgeInsets.fromLTRB(16, 32, 16, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Icon(
                       Icons.arrow_back_ios_new,
                       color: Colors.white,
-                      size: 16,
+                      size: 14,
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
                 const TranslatedText(
                   'Spare Parts',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 24,
+                    fontSize: 20,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 TranslatedText(
                   'Inventory management',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.6),
-                    fontSize: 13,
+                    fontSize: 12,
                   ),
                 ),
-                const SizedBox(height: 14),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ValueListenableBuilder<String>(
-                    valueListenable: langNotifier,
-                    builder: (_, lang, __) => ValueListenableBuilder<int>(
-                      valueListenable:
-                          MLKitTranslationService.instance.translationVersion,
-                      builder: (_, __, ___) => TextField(
-                        decoration: InputDecoration(
-                          hintText: t('Search parts...'),
-                          hintStyle: TextStyle(
-                            color: Colors.grey[400],
-                            fontSize: 14,
-                          ),
-                          prefixIcon: Icon(
-                            Icons.search_rounded,
-                            color: Colors.grey[400],
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 14,
-                          ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        onChanged: (v) => setState(
-                          () => filteredList = allParts
-                              .where(
-                                (item) => (item['reference'] ?? '')
-                                    .toString()
-                                    .toLowerCase()
-                                    .contains(v.toLowerCase()),
-                              )
-                              .toList(),
+                        child: ValueListenableBuilder<String>(
+                          valueListenable: langNotifier,
+                          builder: (_, lang, __) => ValueListenableBuilder<int>(
+                            valueListenable:
+                                MLKitTranslationService.instance.translationVersion,
+                            builder: (_, __, ___) => TextField(
+                              decoration: InputDecoration(
+                                hintText: t('Search parts...'),
+                                hintStyle: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontSize: 14,
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.search_rounded,
+                                  color: Colors.grey[400],
+                                ),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                              ),
+                              onChanged: (v) => setState(() {
+                                filteredList = allParts
+                                    .where(
+                                      (item) => (item['reference'] ?? '')
+                                          .toString()
+                                          .toLowerCase()
+                                          .contains(v.toLowerCase()),
+                                    )
+                                    .toList();
+                                _currentPage = 0;
+                              }),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    HeaderIconBtn(
+                      icon: Icons.download_rounded,
+                      onTap: () => _showExportSheet(context),
+                    ),
+                    const SizedBox(width: 8),
+                    HeaderIconBtn(
+                      icon: Icons.add_rounded,
+                      onTap: _showAddDialog,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1268,6 +1321,15 @@ class _ListPageState extends State<ListPage> {
                           alerts: _orderAlerts,
                           onDismiss: () =>
                               setState(() => _bannerDismissed = true),
+                          onTapAlert: (alert) {
+                            final part = allParts.firstWhere(
+                              (p) => (p['reference'] ?? '').toString().toLowerCase() == alert.reference.toLowerCase(),
+                              orElse: () => null,
+                            );
+                            if (part != null) {
+                              Navigator.push(context, createRoute(ResultPage(data: part, token: widget.token)));
+                            }
+                          },
                         ),
                       Expanded(
                         child: filteredList.isEmpty
@@ -1298,9 +1360,59 @@ class _ListPageState extends State<ListPage> {
                                   16,
                                   80,
                                 ),
-                                itemCount: filteredList.length,
+                                itemCount:
+                                    _pageItems.length +
+                                    (filteredList.isNotEmpty && _pageCount > 1
+                                        ? 1
+                                        : 0),
                                 itemBuilder: (ctx, i) {
-                                  final item = filteredList[i];
+                                  if (i == _pageItems.length) {
+                                    return Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        16,
+                                        4,
+                                        16,
+                                        12,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          IconButton(
+                                            tooltip: 'Previous page',
+                                            onPressed: _currentPage == 0
+                                                ? null
+                                                : () => setState(
+                                                    () => _currentPage--,
+                                                  ),
+                                            icon: const Icon(
+                                              Icons.chevron_left_rounded,
+                                            ),
+                                          ),
+                                          Text(
+                                            '${_currentPage + 1} / $_pageCount',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              color: STBG.textPrimary,
+                                            ),
+                                          ),
+                                          IconButton(
+                                            tooltip: 'Next page',
+                                            onPressed:
+                                                _currentPage >= _pageCount - 1
+                                                ? null
+                                                : () => setState(
+                                                    () => _currentPage++,
+                                                  ),
+                                            icon: const Icon(
+                                              Icons.chevron_right_rounded,
+                                            ),
+                                          ),
+                                            ],
+                                      ),
+                                    );
+                                  }
+                                  final item = _pageItems[i];
                                   final int qty = item['quantity'] ?? 0;
                                   final bool low = qty <= 5;
                                   SafetyStockResult? alert;
@@ -1647,6 +1759,17 @@ class _ListPageState extends State<ListPage> {
                       ),
                     ],
                   ),
+          ),
+            ],
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: CustomBottomNavigationBar(
+              currentIndex: 0,
+              token: widget.token,
+            ),
           ),
         ],
       ),

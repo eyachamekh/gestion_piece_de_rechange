@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:gestion_piece_de_rechange/screens/loading_page.dart';
 import 'package:gestion_piece_de_rechange/utils/app_utils.dart';
 import 'package:gestion_piece_de_rechange/widgets/shared_widgets.dart';
+import 'package:gestion_piece_de_rechange/widgets/custom_bottom_navigation_bar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -19,6 +20,7 @@ class ScanPage extends StatefulWidget {
 
 class _ScanPageState extends State<ScanPage> {
   final ImagePicker _picker = ImagePicker();
+  File? _selectedImageFile;
 
   Future<bool> _requestCameraPermission() async {
     final status = await Permission.camera.status;
@@ -29,9 +31,14 @@ class _ScanPageState extends State<ScanPage> {
         context: context,
         builder: (ctx) => AlertDialog(
           title: const Text('Camera access required'),
-          content: const Text('Please enable camera access in app settings to take a photo.'),
+          content: const Text(
+            'Please enable camera access in app settings to take a photo.',
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
@@ -66,23 +73,37 @@ class _ScanPageState extends State<ScanPage> {
       if (!await file.exists()) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not read the selected image. Try again.')),
+          const SnackBar(
+            content: Text('Could not read the selected image. Try again.'),
+          ),
         );
         return;
       }
       // Debug: log selected file path and size
       try {
         final len = await file.length();
-        debugPrint('scan_page.pickImage: selected file path=${file.path}, size=${len}');
+        debugPrint(
+          'scan_page.pickImage: selected file path=$file.path, size=$len',
+        );
       } catch (e) {
-        debugPrint('scan_page.pickImage: selected file path=${file.path}, could not read length: $e');
+        debugPrint(
+          'scan_page.pickImage: selected file path=$file.path, could not read length: $e',
+        );
       }
       if (!mounted) return;
-      Navigator.push(context, createRoute(LoadingPage(image: file, token: widget.token)));
+      setState(() {
+        _selectedImageFile = file;
+      });
+      Navigator.push(
+        context,
+        createRoute(LoadingPage(image: file, token: widget.token)),
+      );
     } on PlatformException catch (e) {
       if (!mounted) return;
       final message = e.message ?? 'Unable to access the camera or gallery.';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -90,8 +111,10 @@ class _ScanPageState extends State<ScanPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: STBG.surface,
-      body: Column(
+      body: Stack(
         children: [
+          Column(
+            children: [
           const STBGHeader(
             title: 'Scan a Part',
             subtitle: 'Identify a spare part using your camera or gallery',
@@ -103,19 +126,47 @@ class _ScanPageState extends State<ScanPage> {
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
-                  Container(
-                    width: 130,
-                    height: 130,
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        colors: [STBG.steel.withAlpha((0.15 * 255).round()), STBG.steel.withAlpha((0.03 * 255).round())],
+                  const SizedBox(height: 8),
+                  if (_selectedImageFile != null)
+                    Center(
+                      child: SizedBox(
+                        width: 240,
+                        height: 160,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.file(
+                            _selectedImageFile!,
+                            fit: BoxFit.cover,
+                            width: 240,
+                            height: 160,
+                          ),
+                        ),
                       ),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: STBG.steel.withAlpha((0.2 * 255).round()), width: 2),
+                    )
+                  else
+                    Container(
+                      width: 130,
+                      height: 130,
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          colors: [
+                            STBG.steel.withAlpha((0.15 * 255).round()),
+                            STBG.steel.withAlpha((0.03 * 255).round()),
+                          ],
+                        ),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: STBG.steel.withAlpha((0.2 * 255).round()),
+                          width: 2,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.document_scanner_rounded,
+                        size: 58,
+                        color: STBG.steel.withAlpha((0.7 * 255).round()),
+                      ),
                     ),
-                    child: Icon(Icons.document_scanner_rounded, size: 58, color: STBG.steel.withAlpha((0.7 * 255).round())),
-                  ),
-                  const SizedBox(height: 36),
+                  const SizedBox(height: 24),
                   ScanOption(
                     icon: Icons.camera_alt_rounded,
                     title: 'Take a Photo',
@@ -131,6 +182,17 @@ class _ScanPageState extends State<ScanPage> {
                   ),
                 ],
               ),
+            ),
+          ),
+            ],
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: CustomBottomNavigationBar(
+              currentIndex: 1,
+              token: widget.token,
             ),
           ),
         ],
