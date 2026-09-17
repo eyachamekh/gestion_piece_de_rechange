@@ -3,6 +3,7 @@
 *.log
 *.pyc
 *.swp
+.env
 .DS_Store
 .atom/
 .build/
@@ -43,3 +44,14 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+piece_de_rechanges.sql
+android/build/
+android/.gradle/
+build/
+.dart_tool/
+node_modules/
+*.log
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/uploads/

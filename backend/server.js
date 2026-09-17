@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const mysql = require("mysql2");
@@ -15,20 +16,47 @@ app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-const SECRET = "mysecretkey";
+const SECRET = process.env.JWT_SECRET;
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, "uploads")),
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
 });
 const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024, fieldSize: 10 * 1024 * 1024 } });
-
-const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "piece_de_rechanges",
+// //laptop
+// const db = mysql.createConnection({
+//   host: process.env.DB_HOST || "localhost",
+//   user: process.env.DB_USER,
+//   password: process.env.DB_PASSWORD,
+//   database: process.env.DB_NAME,
+// });
+//phone
+const db = mysql.createPool({
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT || 3306),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  ssl: {
+    // rejectUnauthorized: true,
+    rejectUnauthorized: false,
+  },
+    waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
+//add database connection test 
+db.getConnection((err, connection) => {
+  if (err) {
+    console.error("❌ Aiven MySQL connection failed:", err.message);
+    return;
+  }
+
+  console.log("✅ Connected successfully to Aiven MySQL");
+
+  connection.release();
+});
+
 
 // LOGIN WITH JWT
 app.post("/api/login", (req, res) => {
@@ -358,10 +386,26 @@ const ensurePartsEmbeddings = () => {
   });
 };
 
+  //phone : create a helth endpoint
+  app.get('/health', (req, res) => {
+  res.json({
+    success: true,
+    message: 'STBG API is running'
+  });
+  });
+  // Initialize database
 db.query(ensureActivitiesTable, (schemaErr) => {
   if (schemaErr) console.error("activities table:", schemaErr.message);
   ensurePartsEmbeddings();
-  app.listen(3000, () => {
-    console.log("Server running on http://localhost:3000");
+  // Laptop
+  // app.listen(3000, () => {
+  //   console.log("Server running on http://localhost:3000");
+  // });
+
+  // phone and laptop
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running on port ${PORT}`);
   });
+
 });

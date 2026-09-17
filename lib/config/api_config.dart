@@ -17,7 +17,9 @@ class ApiConfig {
       return 'http://$hostOverride:3000';
     }
     if (kIsWeb) return 'http://localhost:3000';
-    if (Platform.isAndroid) return 'http://10.0.2.2:3000';
+    //change this to pc's local wifi address "192.168.100.7"
+    // if (Platform.isAndroid) return 'http://10.0.2.2:3000';
+    if (Platform.isAndroid) return 'http://192.168.100.7:3000';
     return 'http://127.0.0.1:3000';
   }
 
