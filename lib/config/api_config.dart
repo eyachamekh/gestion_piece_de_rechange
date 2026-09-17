@@ -19,7 +19,7 @@ class ApiConfig {
     if (kIsWeb) return 'http://localhost:3000';
     //change this to pc's local wifi address "192.168.100.7"
     // if (Platform.isAndroid) return 'http://10.0.2.2:3000';
-    if (Platform.isAndroid) return 'http://192.168.100.7:3000';
+    if (Platform.isAndroid) return 'https://gestionpiecederechange-production.up.railway.app';
     return 'http://127.0.0.1:3000';
   }
 
