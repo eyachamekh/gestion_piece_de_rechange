@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:image/image.dart' as img;
 
 import 'package:excel/excel.dart' as xl;
 import 'package:file_picker/file_picker.dart';
@@ -129,6 +130,8 @@ class _ListPageState extends State<ListPage> {
     final refCtrl = TextEditingController();
     final locCtrl = TextEditingController();
     final qtyCtrl = TextEditingController();
+    final nameCtrl = TextEditingController();
+    final fournCtrl = TextEditingController();
     final List<File?> images = List<File?>.filled(7, null);
     final picker = ImagePicker();
 
@@ -191,6 +194,18 @@ class _ListPageState extends State<ListPage> {
                           ctrl: refCtrl,
                           label: t('Reference'),
                           icon: Icons.tag_rounded,
+                        ),
+                        const SizedBox(height: 10),
+                        DialogField(
+                          ctrl: nameCtrl,
+                          label: t('Part Name'),
+                          icon: Icons.label_outline_rounded,
+                        ),
+                        const SizedBox(height: 10),
+                        DialogField(
+                          ctrl: fournCtrl,
+                          label: t('Supplier Reference'),
+                          icon: Icons.business_outlined,
                         ),
                         const SizedBox(height: 10),
                         DialogField(
@@ -353,7 +368,9 @@ class _ListPageState extends State<ListPage> {
                   ..headers['Authorization'] = 'Bearer ${widget.token}'
                   ..fields['reference'] = refCtrl.text
                   ..fields['location'] = locCtrl.text
-                  ..fields['quantity'] = qtyCtrl.text;
+                  ..fields['quantity'] = qtyCtrl.text
+                  ..fields['name'] = nameCtrl.text
+                  ..fields['fournisseur_reference'] = fournCtrl.text;
 
                 for (int i = 0; i < images.length; i++) {
                   final image = images[i];
@@ -375,9 +392,17 @@ class _ListPageState extends State<ListPage> {
                   }
                 }
 
-                await req.send();
-                Navigator.pop(context);
-                loadParts();
+                final streamed = await req.send();
+                if (!mounted) return;
+                if (streamed.statusCode == 200 || streamed.statusCode == 201) {
+                  Navigator.pop(context);
+                  loadParts();
+                } else {
+                  final body = await streamed.stream.bytesToString();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error ${streamed.statusCode}: $body')),
+                  );
+                }
               },
               child: const TranslatedText('Add Part'),
             ),
@@ -387,10 +412,41 @@ class _ListPageState extends State<ListPage> {
     );
   }
 
+  Future<File> _rotateImageFile(File file) async {
+    final bytes = await file.readAsBytes();
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) return file;
+    final rotated = img.copyRotate(decoded, angle: 90);
+    final outBytes = img.encodeJpg(rotated);
+    final tmp = await getTemporaryDirectory();
+    final newFile = File('${tmp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    await newFile.writeAsBytes(outBytes);
+    return newFile;
+  }
+
+  Future<File> _rotateNetworkImage(String url) async {
+    final res = await http.get(Uri.parse(url));
+    final decoded = img.decodeImage(res.bodyBytes);
+    if (decoded == null) throw Exception('Cannot decode image');
+    final rotated = img.copyRotate(decoded, angle: 90);
+    final outBytes = img.encodeJpg(rotated);
+    final tmp = await getTemporaryDirectory();
+    final file = File('${tmp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    await file.writeAsBytes(outBytes);
+    return file;
+  }
+
   void _showEditDialog(Map item) {
     final refCtrl = TextEditingController(text: item['reference'] ?? '');
     final locCtrl = TextEditingController(text: item['location'] ?? '');
     final qtyCtrl = TextEditingController(text: item['quantity'].toString());
+    final nameCtrl = TextEditingController(text: item['name'] ?? '');
+    final fournCtrl = TextEditingController(text: item['fournisseur_reference'] ?? '');
+    // existing[i] = server filename, null means slot is empty or replaced
+    final List<String?> existing = List.generate(
+      7,
+      (i) => item['image${i + 1}'] as String?,
+    );
     final List<XFile?> newImages = List<XFile?>.filled(7, null);
     final picker = ImagePicker();
 
@@ -442,30 +498,54 @@ class _ListPageState extends State<ListPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                DialogField(
-                  ctrl: refCtrl,
-                  label: t('Reference'),
-                  icon: Icons.tag_rounded,
-                ),
-                const SizedBox(height: 10),
-                DialogField(
-                  ctrl: locCtrl,
-                  label: t('Location'),
-                  icon: Icons.location_on_outlined,
-                ),
-                const SizedBox(height: 10),
-                DialogField(
-                  ctrl: qtyCtrl,
-                  label: t('Quantity'),
-                  icon: Icons.numbers_rounded,
-                  numeric: true,
+                ValueListenableBuilder<String>(
+                  valueListenable: langNotifier,
+                  builder: (_, lang, __) => ValueListenableBuilder<int>(
+                    valueListenable:
+                        MLKitTranslationService.instance.translationVersion,
+                    builder: (_, __, ___) => Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        DialogField(
+                          ctrl: refCtrl,
+                          label: t('Reference'),
+                          icon: Icons.tag_rounded,
+                        ),
+                        const SizedBox(height: 10),
+                        DialogField(
+                          ctrl: nameCtrl,
+                          label: t('Part Name'),
+                          icon: Icons.label_outline_rounded,
+                        ),
+                        const SizedBox(height: 10),
+                        DialogField(
+                          ctrl: fournCtrl,
+                          label: t('Supplier Reference'),
+                          icon: Icons.business_outlined,
+                        ),
+                        const SizedBox(height: 10),
+                        DialogField(
+                          ctrl: locCtrl,
+                          label: t('Location'),
+                          icon: Icons.location_on_outlined,
+                        ),
+                        const SizedBox(height: 10),
+                        DialogField(
+                          ctrl: qtyCtrl,
+                          label: t('Quantity'),
+                          icon: Icons.numbers_rounded,
+                          numeric: true,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    for (int i = 0; i < newImages.length; i++)
+                    for (int i = 0; i < 7; i++)
                       SizedBox(
                         width: 90,
                         height: 90,
@@ -473,11 +553,12 @@ class _ListPageState extends State<ListPage> {
                           onTap: () async {
                             final source = await pickSource();
                             if (source == null) return;
-                            final picked = await picker.pickImage(
-                              source: source,
-                            );
+                            final picked = await picker.pickImage(source: source);
                             if (picked != null) {
-                              setD(() => newImages[i] = picked);
+                              setD(() {
+                                newImages[i] = picked;
+                                existing[i] = null; // replaced
+                              });
                             }
                           },
                           child: Stack(
@@ -491,14 +572,19 @@ class _ListPageState extends State<ListPage> {
                                   ),
                                   image: newImages[i] != null
                                       ? DecorationImage(
-                                          image: FileImage(
-                                            File(newImages[i]!.path),
-                                          ),
+                                          image: FileImage(File(newImages[i]!.path)),
                                           fit: BoxFit.cover,
                                         )
-                                      : null,
+                                      : existing[i] != null
+                                          ? DecorationImage(
+                                              image: NetworkImage(
+                                                ApiConfig.uploadUrl(existing[i]!),
+                                              ),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
                                 ),
-                                child: newImages[i] == null
+                                child: (newImages[i] == null && existing[i] == null)
                                     ? const Center(
                                         child: Icon(
                                           Icons.add_a_photo_outlined,
@@ -508,16 +594,16 @@ class _ListPageState extends State<ListPage> {
                                       )
                                     : null,
                               ),
-                              if (newImages[i] != null)
+                              if (newImages[i] != null || existing[i] != null)
                                 Positioned(
                                   top: 4,
                                   right: 4,
                                   child: GestureDetector(
                                     behavior: HitTestBehavior.opaque,
-                                    onTap: () {
-                                      if (newImages.length <= 3) return;
-                                      setD(() => newImages[i] = null);
-                                    },
+                                    onTap: () => setD(() {
+                                      newImages[i] = null;
+                                      existing[i] = null;
+                                    }),
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
                                       decoration: const BoxDecoration(
@@ -532,31 +618,47 @@ class _ListPageState extends State<ListPage> {
                                     ),
                                   ),
                                 ),
+                              if (newImages[i] != null || existing[i] != null)
+                                Positioned(
+                                  bottom: 4,
+                                  right: 4,
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () async {
+                                      try {
+                                        if (newImages[i] != null) {
+                                          final rotated = await _rotateImageFile(
+                                            File(newImages[i]!.path),
+                                          );
+                                          setD(() => newImages[i] = XFile(rotated.path));
+                                        } else if (existing[i] != null) {
+                                          final rotated = await _rotateNetworkImage(
+                                            ApiConfig.uploadUrl(existing[i]!),
+                                          );
+                                          setD(() {
+                                            newImages[i] = XFile(rotated.path);
+                                            existing[i] = null;
+                                          });
+                                        }
+                                      } catch (e) {
+                                        debugPrint('Rotate error: $e');
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.rotate_right,
+                                        color: Colors.white,
+                                        size: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                             ],
-                          ),
-                        ),
-                      ),
-                    if (newImages.length < 7)
-                      SizedBox(
-                        width: 90,
-                        height: 90,
-                        child: GestureDetector(
-                          onTap: () => setD(() => newImages.add(null)),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: STBG.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: STBG.steel.withOpacity(0.25),
-                              ),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.add,
-                                color: STBG.steel,
-                                size: 28,
-                              ),
-                            ),
                           ),
                         ),
                       ),
@@ -585,8 +687,10 @@ class _ListPageState extends State<ListPage> {
                   ..headers['Authorization'] = 'Bearer ${widget.token}'
                   ..fields['reference'] = refCtrl.text
                   ..fields['location'] = locCtrl.text
-                  ..fields['quantity'] = qtyCtrl.text;
-                for (int i = 0; i < newImages.length; i++) {
+                  ..fields['quantity'] = qtyCtrl.text
+                  ..fields['name'] = nameCtrl.text
+                  ..fields['fournisseur_reference'] = fournCtrl.text;
+                for (int i = 0; i < 7; i++) {
                   final image = newImages[i];
                   if (image != null) {
                     req.files.add(
@@ -603,11 +707,22 @@ class _ListPageState extends State<ListPage> {
                     } catch (e) {
                       debugPrint('Embedding calculation error: $e');
                     }
+                  } else if (existing[i] == null) {
+                    // slot was cleared — tell backend to remove it
+                    req.fields['clear_image${i + 1}'] = '1';
                   }
                 }
-                await req.send();
-                Navigator.pop(context);
-                loadParts();
+                final streamed = await req.send();
+                if (!mounted) return;
+                if (streamed.statusCode == 200 || streamed.statusCode == 201) {
+                  Navigator.pop(context);
+                  loadParts();
+                } else {
+                  final body = await streamed.stream.bytesToString();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error ${streamed.statusCode}: $body')),
+                  );
+                }
               },
               child: const TranslatedText('Save Changes'),
             ),
@@ -676,6 +791,8 @@ class _ListPageState extends State<ListPage> {
                   'reference': item['reference'],
                   'location': item['location'],
                   'quantity': newQty,
+                  'name': item['name'],
+                  'fournisseur_reference': item['fournisseur_reference'],
                 }),
               );
               if (res.statusCode == 200) {
@@ -1281,10 +1398,12 @@ class _ListPageState extends State<ListPage> {
                               onChanged: (v) => setState(() {
                                 filteredList = allParts
                                     .where(
-                                      (item) => (item['reference'] ?? '')
-                                          .toString()
-                                          .toLowerCase()
-                                          .contains(v.toLowerCase()),
+                                      (item) {
+                                        final q = v.toLowerCase();
+                                        return (item['reference'] ?? '').toString().toLowerCase().contains(q)
+                                            || (item['fournisseur_reference'] ?? '').toString().toLowerCase().contains(q)
+                                            || (item['name'] ?? '').toString().toLowerCase().contains(q);
+                                      },
                                     )
                                     .toList();
                                 _currentPage = 0;
@@ -1648,15 +1767,32 @@ class _ListPageState extends State<ListPage> {
                                                             const SizedBox(
                                                               height: 3,
                                                             ),
-                                                            Text(
-                                                              item['location'] ??
-                                                                  '-',
-                                                              style: const TextStyle(
-                                                                color: STBG
-                                                                    .textSecondary,
-                                                                fontSize: 12,
+                                                            if ((item['fournisseur_reference'] ?? '').toString().isNotEmpty)
+                                                              Text(
+                                                                item['fournisseur_reference'].toString(),
+                                                                style: const TextStyle(
+                                                                  color: STBG.textSecondary,
+                                                                  fontSize: 11,
+                                                                ),
                                                               ),
-                                                            ),
+                                                            if ((item['name'] ?? '').toString().isNotEmpty)
+                                                              Text(
+                                                                item['name'].toString(),
+                                                                style: const TextStyle(
+                                                                  color: STBG.textSecondary,
+                                                                  fontSize: 12,
+                                                                ),
+                                                              )
+                                                            else
+                                                              Text(
+                                                                item['location'] ??
+                                                                    '-',
+                                                                style: const TextStyle(
+                                                                  color: STBG
+                                                                      .textSecondary,
+                                                                  fontSize: 12,
+                                                                ),
+                                                              ),
                                                           ],
                                                         ),
                                                       ),

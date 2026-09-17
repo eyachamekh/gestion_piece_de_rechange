@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -195,6 +196,39 @@ class _LoadingPageState extends State<LoadingPage>
         for (final raw in parts)
           (raw['id'] as num).toInt(): Map<String, dynamic>.from(raw as Map),
       };
+
+      // IDs already covered by the static gallery
+      final staticIds = gallery.map((m) => m.partId).toSet();
+
+      // Match against DB-stored embeddings for parts NOT in the static gallery
+      final dbMatches = <Map<String, dynamic>>[];
+      for (final raw in parts) {
+        final part = Map<String, dynamic>.from(raw as Map);
+        final id = (part['id'] as num).toInt();
+        if (staticIds.contains(id)) continue;
+        double bestScore = 0.0;
+        for (int j = 1; j <= 7; j++) {
+          final embJson = part['embedding$j'];
+          if (embJson == null) continue;
+          try {
+            final List<dynamic> decoded = jsonDecode(embJson as String);
+            final dbEmb = decoded.map((e) => (e as num).toDouble()).toList();
+            final score = ImageClassifierService.cosineSimilarity(embedding, dbEmb);
+            if (score > bestScore) bestScore = score;
+          } catch (_) {}
+        }
+        if (bestScore >= minimumDisplayedSimilarity) {
+          dbMatches.add({
+            'part': part,
+            'score': bestScore,
+            'visualScore': bestScore,
+            'matchSource': partialMatchesById.containsKey(id)
+                ? 'ocr_partial+visual'
+                : 'visual_db',
+          });
+        }
+      }
+
       final combined = <Map<String, dynamic>>[];
       for (final match in gallery) {
         if (match.score < minimumDisplayedSimilarity) continue;
@@ -208,6 +242,8 @@ class _LoadingPageState extends State<LoadingPage>
           'matchSource': ocr ? 'ocr_partial+visual' : 'visual',
         });
       }
+      combined.addAll(dbMatches);
+      combined.sort((a, b) => (b['score'] as double).compareTo(a['score'] as double));
       debugPrint(
         'Visual gallery candidates above '
         '${minimumDisplayedSimilarity * 100}%: ${combined.length}',

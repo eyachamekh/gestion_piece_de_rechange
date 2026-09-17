@@ -1,10 +1,15 @@
 ﻿import 'dart:convert';
-
+import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:gestion_piece_de_rechange/config/api_config.dart';
 import 'package:gestion_piece_de_rechange/models/safety_stock_result.dart';
+import 'package:gestion_piece_de_rechange/services/image_classifier_service.dart';
+import 'package:gestion_piece_de_rechange/services/mlkit_translation_service.dart';
 import 'package:gestion_piece_de_rechange/services/safety_stock_service.dart';
 import 'package:gestion_piece_de_rechange/services/auth_headers.dart';
 import 'package:gestion_piece_de_rechange/utils/app_utils.dart';
@@ -86,9 +91,9 @@ class _ResultPageState extends State<ResultPage> {
 
 Nous vous informons que le stock de la pièce de rechange suivante a atteint son niveau de sécurité au sein de la société STBG.
 
-Détails de la pièce :
 Référence : $ref
-Emplacement : $loc
+Référence fournisseur : ${widget.data['fournisseur_reference'] ?? '-'}
+Nom de la pièce : ${widget.data['name'] ?? '-'}
 Quantité disponible : $qty
 Stock de sécurité : $ss
 Quantité demandée : 
@@ -104,60 +109,8 @@ E-mail : stbg@stbg.com.tn
 
 Téléphone : 71 434 880
 ''';
-    } else if (lang == 'ar') {
-      subject = 'STBG — طلب إعادة تزويد : $ref';
-      body =
-          '''السيد/السيدة،
-
-نحيطكم علماً أن مخزون قطعة الغيار التالية قد وصل إلى مستوى الأمان لدى شركة STBG.
-
-تفاصيل القطعة:
-المرجع : $ref
-الموقع : $loc
-الكمية المتاحة : $qty
-مخزون الأمان : $ss
-الكمية المطلوبة : 
-
-ولتفادي نقص المخزون وضمان استمرارية عملياتنا، نرجو تزويدنا بتوفركم وعرض أسعار، أو القيام بإعادة التزويد في أقرب وقت ممكن، وفقاً لاتفاقياتنا.
-
-نحن في خدمتكم لأي معلومات إضافية.
-
-مع التحية،
-قسم المخزن / الصيانة
-شركة STBG
-البريد الإلكتروني: stbg@stbg.com.tn
-
-الهاتف: 71 434 880
-''';
-    } else {
-      // Default to English
-      subject = 'STBG — Replenishment request: $ref';
-      body =
-          '''Dear Sir / Madam,
-
-We inform you that the stock of the following spare part has reached its safety level within STBG.
-
-Part details:
-Reference: $ref
-Location: $loc
-Available quantity: $qty
-Safety stock: $ss
-Requested quantity: 
-
-To avoid stock outs and ensure continuity of our operations, please provide your availability and a quotation, or proceed with replenishment as soon as possible according to our agreements.
-
-We remain at your disposal for any further information.
-
-Sincerely,
-Store / Maintenance Department
-STBG Company
-E-mail: stbg@stbg.com.tn
-
-Tel: 71 434 880
-''';
     }
 
-    // Encode subject and body using percent-encoding so spaces become %20 (not '+')
     final encodedSubject = Uri.encodeComponent(subject);
     final encodedBody = Uri.encodeComponent(body);
     final uriStr = 'mailto:?subject=$encodedSubject&body=$encodedBody';
@@ -634,73 +587,236 @@ Tel: 71 434 880
     );
   }
 
-  Future<void> _showEditDialog() async {
-    final referenceCtrl = TextEditingController(
-      text: widget.data['reference']?.toString() ?? '',
-    );
-    final locationCtrl = TextEditingController(
-      text: widget.data['location']?.toString() ?? '',
-    );
-    final quantityCtrl = TextEditingController(
-      text: widget.data['quantity']?.toString() ?? '0',
-    );
-    await showDialog<void>(
+  Future<File> _rotateImageFile(File file) async {
+    final bytes = await file.readAsBytes();
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) return file;
+    final rotated = img.copyRotate(decoded, angle: 90);
+    final outBytes = img.encodeJpg(rotated);
+    final tmp = await getTemporaryDirectory();
+    final newFile = File('${tmp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    await newFile.writeAsBytes(outBytes);
+    return newFile;
+  }
+
+  Future<File> _rotateNetworkImage(String url) async {
+    final res = await http.get(Uri.parse(url));
+    final decoded = img.decodeImage(res.bodyBytes);
+    if (decoded == null) throw Exception('Cannot decode image');
+    final rotated = img.copyRotate(decoded, angle: 90);
+    final outBytes = img.encodeJpg(rotated);
+    final tmp = await getTemporaryDirectory();
+    final file = File('${tmp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    await file.writeAsBytes(outBytes);
+    return file;
+  }
+
+  void _showEditDialog() {
+    final refCtrl = TextEditingController(text: widget.data['reference'] ?? '');
+    final locCtrl = TextEditingController(text: widget.data['location'] ?? '');
+    final qtyCtrl = TextEditingController(text: widget.data['quantity'].toString());
+    final nameCtrl = TextEditingController(text: widget.data['name'] ?? '');
+    final fournCtrl = TextEditingController(text: widget.data['fournisseur_reference'] ?? '');
+    final List<String?> existing = List.generate(7, (i) => widget.data['image${i + 1}'] as String?);
+    final List<XFile?> newImages = List<XFile?>.filled(7, null);
+    final picker = ImagePicker();
+
+    Future<ImageSource?> pickSource() => showModalBottomSheet<ImageSource>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const TranslatedText('Edit Part'),
-        content: Column(
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            DialogField(
-              ctrl: referenceCtrl,
-              label: t('Reference'),
-              icon: Icons.tag_rounded,
+            const SizedBox(height: 12),
+            Container(
+              width: 42, height: 4,
+              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(4)),
             ),
-            const SizedBox(height: 10),
-            DialogField(
-              ctrl: locationCtrl,
-              label: t('Location'),
-              icon: Icons.location_on_outlined,
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const TranslatedText('Choose from gallery'),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
             ),
-            const SizedBox(height: 10),
-            DialogField(
-              ctrl: quantityCtrl,
-              label: t('Quantity'),
-              icon: Icons.numbers_rounded,
-              numeric: true,
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const TranslatedText('Take a picture'),
+              onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const TranslatedText('Cancel'),
+      ),
+    );
+
+    showDialog(
+      context: context,
+      builder: (_) => StatefulBuilder(
+        builder: (ctx, setD) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: const TranslatedText('Edit Part'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ValueListenableBuilder<String>(
+                  valueListenable: langNotifier,
+                  builder: (_, lang, __) => ValueListenableBuilder<int>(
+                    valueListenable: MLKitTranslationService.instance.translationVersion,
+                    builder: (_, __, ___) => Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        DialogField(ctrl: refCtrl, label: t('Reference'), icon: Icons.tag_rounded),
+                        const SizedBox(height: 10),
+                        DialogField(ctrl: nameCtrl, label: t('Part Name'), icon: Icons.label_outline_rounded),
+                        const SizedBox(height: 10),
+                        DialogField(ctrl: fournCtrl, label: t('Supplier Reference'), icon: Icons.business_outlined),
+                        const SizedBox(height: 10),
+                        DialogField(ctrl: locCtrl, label: t('Location'), icon: Icons.location_on_outlined),
+                        const SizedBox(height: 10),
+                        DialogField(ctrl: qtyCtrl, label: t('Quantity'), icon: Icons.numbers_rounded, numeric: true),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (int i = 0; i < 7; i++)
+                      SizedBox(
+                        width: 90, height: 90,
+                        child: GestureDetector(
+                          onTap: () async {
+                            final source = await pickSource();
+                            if (source == null) return;
+                            final picked = await picker.pickImage(source: source);
+                            if (picked != null) {
+                              setD(() { newImages[i] = picked; existing[i] = null; });
+                            }
+                          },
+                          child: Stack(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: STBG.surface,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: STBG.steel.withOpacity(0.25)),
+                                  image: newImages[i] != null
+                                      ? DecorationImage(image: FileImage(File(newImages[i]!.path)), fit: BoxFit.cover)
+                                      : existing[i] != null
+                                          ? DecorationImage(image: NetworkImage(ApiConfig.uploadUrl(existing[i]!)), fit: BoxFit.cover)
+                                          : null,
+                                ),
+                                child: (newImages[i] == null && existing[i] == null)
+                                    ? const Center(child: Icon(Icons.add_a_photo_outlined, color: STBG.steel, size: 24))
+                                    : null,
+                              ),
+                              if (newImages[i] != null || existing[i] != null)
+                                Positioned(
+                                  top: 4, right: 4,
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () => setD(() { newImages[i] = null; existing[i] = null; }),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                      child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                    ),
+                                  ),
+                                ),
+                              if (newImages[i] != null || existing[i] != null)
+                                Positioned(
+                                  bottom: 4, right: 4,
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () async {
+                                      try {
+                                        if (newImages[i] != null) {
+                                          final rotated = await _rotateImageFile(File(newImages[i]!.path));
+                                          setD(() => newImages[i] = XFile(rotated.path));
+                                        } else if (existing[i] != null) {
+                                          final rotated = await _rotateNetworkImage(ApiConfig.uploadUrl(existing[i]!));
+                                          setD(() { newImages[i] = XFile(rotated.path); existing[i] = null; });
+                                        }
+                                      } catch (e) { debugPrint('Rotate error: $e'); }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                                      child: const Icon(Icons.rotate_right, color: Colors.white, size: 14),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
           ),
-          ElevatedButton(
-            onPressed: () async {
-              final response = await http.put(
-                Uri.parse(ApiConfig.url('/api/parts/${widget.data['id']}')),
-                headers: makeAuthHeaders(widget.token ?? '', json: true),
-                body: jsonEncode({
-                  'reference': referenceCtrl.text.trim(),
-                  'location': locationCtrl.text.trim(),
-                  'quantity': int.tryParse(quantityCtrl.text) ?? 0,
-                }),
-              );
-              if (!mounted) return;
-              if (response.statusCode == 200) {
-                setState(() {
-                  widget.data['reference'] = referenceCtrl.text.trim();
-                  widget.data['location'] = locationCtrl.text.trim();
-                  widget.data['quantity'] =
-                      int.tryParse(quantityCtrl.text) ?? 0;
-                });
-                Navigator.pop(dialogContext);
-              }
-            },
-            child: const TranslatedText('Save'),
-          ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const TranslatedText('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: STBG.navy,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () async {
+                final uri = Uri.parse(ApiConfig.url('/api/parts/${widget.data['id']}'));
+                final req = http.MultipartRequest('PUT', uri)
+                  ..headers['Authorization'] = 'Bearer ${widget.token}'
+                  ..fields['reference'] = refCtrl.text
+                  ..fields['location'] = locCtrl.text
+                  ..fields['quantity'] = qtyCtrl.text
+                  ..fields['name'] = nameCtrl.text
+                  ..fields['fournisseur_reference'] = fournCtrl.text;
+                for (int i = 0; i < 7; i++) {
+                  final image = newImages[i];
+                  if (image != null) {
+                    req.files.add(await http.MultipartFile.fromPath('image${i + 1}', image.path));
+                    try {
+                      final emb = await imageClassifierService.getEmbedding(File(image.path));
+                      req.fields['embedding${i + 1}'] = jsonEncode(emb);
+                    } catch (e) { debugPrint('Embedding error: $e'); }
+                  } else if (existing[i] == null) {
+                    req.fields['clear_image${i + 1}'] = '1';
+                  }
+                }
+                final streamed = await req.send();
+                if (!mounted) return;
+                if (streamed.statusCode == 200 || streamed.statusCode == 201) {
+                  setState(() {
+                    widget.data['reference'] = refCtrl.text;
+                    widget.data['location'] = locCtrl.text;
+                    widget.data['quantity'] = int.tryParse(qtyCtrl.text) ?? 0;
+                    widget.data['name'] = nameCtrl.text;
+                    widget.data['fournisseur_reference'] = fournCtrl.text;
+                    for (int i = 0; i < 7; i++) {
+                      if (newImages[i] != null) widget.data['image${i + 1}'] = newImages[i]!.path;
+                      else if (existing[i] == null) widget.data['image${i + 1}'] = null;
+                    }
+                  });
+                  Navigator.pop(context);
+                } else {
+                  final body = await streamed.stream.bytesToString();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error ${streamed.statusCode}: $body')),
+                  );
+                }
+              },
+              child: const TranslatedText('Save Changes'),
+            ),
+          ],
+        ),
       ),
     );
   }
