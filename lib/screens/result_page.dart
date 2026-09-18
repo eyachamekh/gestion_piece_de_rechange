@@ -217,12 +217,12 @@ Téléphone : 71 434 880
                       child: Card(
                         child: ListTile(
                           leading: const Icon(Icons.insights_outlined),
-                          title: Text(
+                          title: TranslatedText(
                             widget.data['matchSource'] == 'visual'
                                 ? 'Visual gallery match'
                                 : 'OCR and visual evidence',
                           ),
-                          subtitle: Text(
+                          subtitle: TranslatedText(
                             widget.data['confidence'] is num
                                 ? 'Similarity: '
                                       '${((widget.data['confidence'] as num).toDouble() * 100).toStringAsFixed(1)}%'
@@ -339,7 +339,7 @@ Téléphone : 71 434 880
                       ),
                     ),
                   Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
                     child: Column(
                       children: [
                         Container(
@@ -360,7 +360,7 @@ Téléphone : 71 434 880
                               Icon(statusIcon, color: statusColor, size: 20),
                               const SizedBox(width: 10),
                               Expanded(
-                                child: Text(
+                                child: TranslatedText(
                                   statusText,
                                   style: TextStyle(
                                     color: statusColor,

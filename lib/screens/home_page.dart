@@ -79,9 +79,10 @@ class _HomePageState extends State<HomePage> {
                   ? 2
                   : 1;
 
-          return Column(
-            children: [
-              Container(
+          return CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Container(
                 width: double.infinity,
                 padding: EdgeInsets.fromLTRB(
                   22,
@@ -183,7 +184,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: 4),
                       TranslatedText(
-                        'Responsable pièces détachées',
+                        'Responsable pièces de rechanges',
                         style: const TextStyle(
                           color: Color(0xFFD8B394),
                           fontSize: 24,
@@ -264,7 +265,9 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              Expanded(
+              ),
+              SliverFillRemaining(
+                hasScrollBody: false,
                 child: Container(
                   width: double.infinity,
                   decoration: const BoxDecoration(
@@ -291,57 +294,58 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            Expanded(
-                              child: ValueListenableBuilder<String>(
-                                valueListenable: langNotifier,
-                                builder: (_, lang, __) => GridView.count(
-                                  crossAxisCount: cardsColumns,
-                                  crossAxisSpacing: 16,
-                                  mainAxisSpacing: 16,
-                                  childAspectRatio: 1.3,
-                                  children: [
-                                    QuickActionCard(
-                                      title: t('Démarrer la numérisation'),
-                                      accent: const Color(0xFFB9855D),
-                                      onTap: () => Navigator.push(
-                                        context,
-                                        createRoute(ScanPage(token: widget.token)),
-                                      ),
-                                      child: _ScanCardBody(),
+                            ValueListenableBuilder<String>(
+                              valueListenable: langNotifier,
+                              builder: (_, lang, __) => GridView.count(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                crossAxisCount: cardsColumns,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                                childAspectRatio: 1.3,
+                                children: [
+                                  QuickActionCard(
+                                    title: t('Démarrer la numérisation'),
+                                    accent: const Color(0xFFB9855D),
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      createRoute(ScanPage(token: widget.token)),
                                     ),
-                                    QuickActionCard(
-                                      title: t('Inventaire des pièces'),
-                                      accent: const Color(0xFFB9855D),
-                                      onTap: () {
-                                        if (widget.role == 'admin') {
-                                          Navigator.push(
-                                            context,
-                                            createRoute(
-                                              ListPage(token: widget.token),
-                                            ),
-                                          );
-                                        }
-                                      },
-                                      child: _InventoryCardBody(),
-                                    ),
-                                    QuickActionCard(
-                                      title: t('Historique d\'activité'),
-                                      accent: const Color(0xFFB9855D),
-                                      onTap: () => Navigator.push(
-                                        context,
-                                        createRoute(
-                                          HistoryPage(
-                                            history: appHistory,
-                                            token: widget.token,
+                                    child: _ScanCardBody(),
+                                  ),
+                                  QuickActionCard(
+                                    title: t('Inventaire des pièces'),
+                                    accent: const Color(0xFFB9855D),
+                                    onTap: () {
+                                      if (widget.role == 'admin') {
+                                        Navigator.push(
+                                          context,
+                                          createRoute(
+                                            ListPage(token: widget.token),
                                           ),
+                                        );
+                                      }
+                                    },
+                                    child: _InventoryCardBody(),
+                                  ),
+                                  QuickActionCard(
+                                    title: t('Historique d\'activité'),
+                                    accent: const Color(0xFFB9855D),
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      createRoute(
+                                        HistoryPage(
+                                          history: appHistory,
+                                          token: widget.token,
                                         ),
                                       ),
-                                      child: _ActivityCardBody(),
                                     ),
-                                  ],
-                                ),
+                                    child: _ActivityCardBody(),
+                                  ),
+                                ],
                               ),
                             ),
+                            const SizedBox(height: 80),
                           ],
                         ),
                       ),

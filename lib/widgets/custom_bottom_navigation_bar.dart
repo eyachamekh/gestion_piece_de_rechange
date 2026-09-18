@@ -3,6 +3,7 @@ import 'package:gestion_piece_de_rechange/screens/history_page.dart';
 import 'package:gestion_piece_de_rechange/screens/list_page.dart';
 import 'package:gestion_piece_de_rechange/screens/scan_page.dart';
 import 'package:gestion_piece_de_rechange/utils/app_utils.dart';
+import 'package:gestion_piece_de_rechange/widgets/shared_widgets.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
   final int currentIndex;
@@ -139,7 +140,7 @@ class _NavigationItem extends StatelessWidget {
                   fontSize: selected ? 10 : 9,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 ),
-                child: Text(label),
+                child: TranslatedText(label),
               ),
             ],
           ),

@@ -411,12 +411,12 @@ class _LoadingPageState extends State<LoadingPage>
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                const TranslatedText(
                   "No matching part found",
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                const TranslatedText(
                   'The part does not exist in the database. You can select an existing part below or open the full list.',
                   style: TextStyle(color: Colors.grey, fontSize: 13),
                 ),
@@ -449,7 +449,7 @@ class _LoadingPageState extends State<LoadingPage>
                           p['reference'] ?? '-',
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
-                        subtitle: Text('Qty: ${p['quantity'] ?? 0}'),
+                        subtitle: TranslatedText('Qty: ${p['quantity'] ?? 0}'),
                         onTap: () {
                           // Push details on top of the sheet so when the user returns they see the same similarity list
                           final sel = Map<String, dynamic>.from(p);
@@ -470,12 +470,12 @@ class _LoadingPageState extends State<LoadingPage>
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx, null),
-                      child: const Text('Cancel'),
+                      child: const TranslatedText('Cancel'),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () => Navigator.pop(ctx, 'list'),
-                      child: const Text('Open full list'),
+                      child: const TranslatedText('Open full list'),
                     ),
                   ],
                 ),
@@ -532,12 +532,12 @@ class _LoadingPageState extends State<LoadingPage>
                   ),
                 ),
                 const SizedBox(height: 12),
-                const Text(
+                const TranslatedText(
                   'Multiple matches found',
                   style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                const TranslatedText(
                   'Select the part that best matches the photo',
                   style: TextStyle(color: Colors.grey, fontSize: 13),
                 ),
@@ -572,8 +572,7 @@ class _LoadingPageState extends State<LoadingPage>
                           p['reference'] ?? '-',
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
-                        // subtitle: Text('${sc.toStringAsFixed(1)}% similarity'),
-                        subtitle: Text('${sc.toStringAsFixed(1)}% similarity'),
+                        subtitle: TranslatedText('${sc.toStringAsFixed(1)}% similarity'),
                         onTap: () {
                           final selected = Map<String, dynamic>.from(p);
                           selected['confidence'] = m['score'];
@@ -597,7 +596,7 @@ class _LoadingPageState extends State<LoadingPage>
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => Navigator.pop(ctx, null),
-                    child: const Text('Cancel'),
+                    child: const TranslatedText('Cancel'),
                   ),
                 ),
               ],
@@ -705,7 +704,7 @@ class _LoadingPageState extends State<LoadingPage>
                 size: 72,
               ),
             const SizedBox(height: 30),
-            Text(
+            TranslatedText(
               _error != null ? 'Analysis failed' : 'Analyzing Part...',
               style: const TextStyle(
                 color: Colors.white,
@@ -716,7 +715,7 @@ class _LoadingPageState extends State<LoadingPage>
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Text(
+              child: TranslatedText(
                 _error ?? _progressMessage,
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -731,7 +730,7 @@ class _LoadingPageState extends State<LoadingPage>
               const SizedBox(height: 24),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text(
+                child: const TranslatedText(
                   'Go back',
                   style: TextStyle(color: Colors.white),
                 ),

@@ -45,7 +45,7 @@ class HistoryPage extends StatelessWidget {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
                     itemCount: history.length,
                     itemBuilder: (_, i) {
                       final h = history[i];

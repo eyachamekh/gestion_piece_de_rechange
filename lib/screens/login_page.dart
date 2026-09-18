@@ -3,6 +3,7 @@ import 'package:gestion_piece_de_rechange/services/api_service.dart';
 import 'package:gestion_piece_de_rechange/screens/home_page.dart';
 import 'package:gestion_piece_de_rechange/utils/app_utils.dart';
 import 'package:gestion_piece_de_rechange/widgets/shared_widgets.dart';
+import 'package:gestion_piece_de_rechange/services/mlkit_translation_service.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -43,7 +44,7 @@ class LoginPage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    Text(
+                    TranslatedText(
                       'Spare Parts Management',
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.55),
@@ -67,18 +68,18 @@ class LoginPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TranslatedText(
+                    const TranslatedText(
                       'Sign In',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: STBG.textPrimary,
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     const SizedBox(height: 6),
-                    TranslatedText(
+                    const TranslatedText(
                       'Enter your credentials to continue',
-                      style: const TextStyle(color: STBG.textSecondary, fontSize: 13),
+                      style: TextStyle(color: STBG.textSecondary, fontSize: 13),
                     ),
                     const SizedBox(height: 28),
                     _LoginField(controller: emailCtrl, label: 'Email', icon: Icons.alternate_email),
@@ -156,15 +157,13 @@ class _LoginField extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<String>(
       valueListenable: langNotifier,
-      builder: (_, lang, __) {
-        String lbl = label;
-        if (label == 'Email') lbl = lang == 'fr' ? 'E-mail' : lang == 'ar' ? 'البريد الإلكتروني' : label;
-        if (label == 'Password') lbl = lang == 'fr' ? 'Mot de passe' : lang == 'ar' ? 'كلمة المرور' : label;
-        return TextField(
+      builder: (_, lang, __) => ValueListenableBuilder<int>(
+        valueListenable: MLKitTranslationService.instance.translationVersion,
+        builder: (_, __, ___) => TextField(
           controller: controller,
           obscureText: obscure,
           decoration: InputDecoration(
-            labelText: lbl,
+            labelText: t(label),
             labelStyle: const TextStyle(color: STBG.textSecondary, fontSize: 14),
             prefixIcon: Icon(icon, color: STBG.steel, size: 20),
             filled: true,
@@ -178,8 +177,8 @@ class _LoginField extends StatelessWidget {
               borderSide: const BorderSide(color: STBG.steel, width: 2),
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
@@ -192,7 +191,7 @@ class _LangChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labels = {'en': '🇬🇧 English', 'fr': '🇫🇷 Français', 'ar': '🇩🇿 العربية'};
+    final labels = {'en': '🇬🇧 English', 'fr': '🇫🇷 Français', 'ar': '🇹🇳 العربية'};
     return GestureDetector(
       onTap: onTap,
       child: Container(

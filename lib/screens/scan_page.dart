@@ -180,6 +180,7 @@ class _ScanPageState extends State<ScanPage> {
                     subtitle: 'Select an existing photo',
                     onTap: () => pickImage(ImageSource.gallery),
                   ),
+                  const SizedBox(height: 80),
                 ],
               ),
             ),
