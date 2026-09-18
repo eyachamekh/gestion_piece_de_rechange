@@ -83,7 +83,7 @@ class _HomePageState extends State<HomePage> {
             slivers: [
               SliverToBoxAdapter(
                 child: Container(
-                width: double.infinity,
+                  width: double.infinity,
                 padding: EdgeInsets.fromLTRB(
                   22,
                   screenWidth < 600 ? 14 : 26,
@@ -264,7 +264,6 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
-              ),
               ),
               SliverFillRemaining(
                 hasScrollBody: false,
