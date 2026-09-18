@@ -6,9 +6,22 @@ import 'package:gestion_piece_de_rechange/utils/app_utils.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await loadHistory();
-  await SafetyStockService.loadDelais();
   runApp(const STBGApp());
+  await _initializeAppData();
+}
+
+Future<void> _initializeAppData() async {
+  try {
+    await loadHistory();
+  } catch (error, stackTrace) {
+    debugPrint('Unable to load saved history: $error\n$stackTrace');
+  }
+
+  try {
+    await SafetyStockService.loadDelais();
+  } catch (error, stackTrace) {
+    debugPrint('Unable to load safety-stock delays: $error\n$stackTrace');
+  }
 }
 
 class STBGApp extends StatefulWidget {

@@ -266,8 +266,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
-              SliverFillRemaining(
-                hasScrollBody: false,
+              SliverToBoxAdapter(
                 child: Container(
                   width: double.infinity,
                   decoration: const BoxDecoration(
