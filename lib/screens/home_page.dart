@@ -84,158 +84,134 @@ class _HomePageState extends State<HomePage> {
               SliverToBoxAdapter(
                 child: Container(
                   width: double.infinity,
-                padding: EdgeInsets.fromLTRB(
-                  22,
-                  screenWidth < 600 ? 14 : 26,
-                  22,
-                  14,
-                ),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF071A30), Color(0xFF0D2946)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                  padding: EdgeInsets.fromLTRB(
+                    22,
+                    screenWidth < 600 ? 14 : 26,
+                    22,
+                    14,
                   ),
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(30),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Color(0x26000000),
-                      blurRadius: 24,
-                      offset: Offset(0, 8),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF071A30), Color(0xFF0D2946)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  ],
-                ),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: maxContentWidth),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(16),
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF2D3438), Color(0xFF13191D)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              border: Border.all(
-                                color: const Color(0xFFC5B9A8),
-                                width: 1,
-                              ),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x33000000),
-                                  blurRadius: 10,
-                                  offset: Offset(0, 6),
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(30),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0x26000000),
+                        blurRadius: 24,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxContentWidth),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              width: 60,
+                              height: 60,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                gradient: const LinearGradient(
+                                  colors: [Color(0xFF2D3438), Color(0xFF13191D)],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
                                 ),
-                              ],
+                                border: Border.all(
+                                  color: const Color(0xFFC5B9A8),
+                                  width: 1,
+                                ),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x33000000),
+                                    blurRadius: 10,
+                                    offset: Offset(0, 6),
+                                  ),
+                                ],
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: stbgLogo(height: 40),
+                              ),
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: stbgLogo(height: 40),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              HeaderIconBtn(
-                                icon: Icons.language_rounded,
-                                onTap: toggleLanguage,
-                                label: ValueListenableBuilder<String>(
-                                  valueListenable: langNotifier,
-                                  builder: (_, lang, __) => Text(
-                                    lang.toUpperCase(),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
+                            Row(
+                              children: [
+                                HeaderIconBtn(
+                                  icon: Icons.language_rounded,
+                                  onTap: toggleLanguage,
+                                  label: ValueListenableBuilder<String>(
+                                    valueListenable: langNotifier,
+                                    builder: (_, lang, __) => Text(
+                                      lang.toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 10),
-                              HeaderIconBtn(
-                                icon: Icons.logout_rounded,
-                                onTap: () => Navigator.pushAndRemoveUntil(
-                                  context,
-                                  createRoute(const LoginPage()),
-                                  (_) => false,
+                                const SizedBox(width: 10),
+                                HeaderIconBtn(
+                                  icon: Icons.logout_rounded,
+                                  onTap: () => Navigator.pushAndRemoveUntil(
+                                    context,
+                                    createRoute(const LoginPage()),
+                                    (_) => false,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      TranslatedText(
-                        'Content de te revoir',
-                        style: const TextStyle(
-                          color: Color(0xFFD8B394),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      TranslatedText(
-                        'Responsable pièces de rechanges',
-                        style: const TextStyle(
-                          color: Color(0xFFD8B394),
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.8,
-                          height: 1.05,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      if (loading)
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8),
-                            child: CircularProgressIndicator(
-                              color: Color(0xFFD8B394),
-                              strokeWidth: 2.2,
+                              ],
                             ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        TranslatedText(
+                          'Content de te revoir',
+                          style: const TextStyle(
+                            color: Color(0xFFD8B394),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.3,
                           ),
-                        )
-                      else
-                        Center(
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 700),
-                            child: statsStacked
-                                ? Column(
-                                    children: [
-                                      GestureDetector(
-                                        onTap: () => Navigator.push(context, createRoute(ListPage(token: widget.token))),
-                                        child: MetricPanel(
-                                          title: 'Total des pièces',
-                                          value: '$totalParts',
-                                          accent: const Color(0xFF78BCEB),
-                                          icon: Icons.inventory_2_rounded,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 14),
-                                      GestureDetector(
-                                        onTap: () => Navigator.push(context, createRoute(ListPage(token: widget.token))),
-                                        child: MetricPanel(
-                                          title: 'A commander',
-                                          value: '$orderAlertCount',
-                                          accent: const Color(0xFFE8A33D),
-                                          icon: Icons.shopping_cart_rounded,
-                                        ),
-                                      ),
-                                    ],
-                                  )
-                                : Row(
-                                    children: [
-                                      Expanded(
-                                        child: GestureDetector(
+                        ),
+                        const SizedBox(height: 4),
+                        TranslatedText(
+                          'Responsable pièces de rechanges',
+                          style: const TextStyle(
+                            color: Color(0xFFD8B394),
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.8,
+                            height: 1.05,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        if (loading)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
+                              child: CircularProgressIndicator(
+                                color: Color(0xFFD8B394),
+                                strokeWidth: 2.2,
+                              ),
+                            ),
+                          )
+                        else
+                          Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 700),
+                              child: statsStacked
+                                  ? Column(
+                                      children: [
+                                        GestureDetector(
                                           onTap: () => Navigator.push(context, createRoute(ListPage(token: widget.token))),
                                           child: MetricPanel(
                                             title: 'Total des pièces',
@@ -244,10 +220,8 @@ class _HomePageState extends State<HomePage> {
                                             icon: Icons.inventory_2_rounded,
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 16),
-                                      Expanded(
-                                        child: GestureDetector(
+                                        const SizedBox(height: 14),
+                                        GestureDetector(
                                           onTap: () => Navigator.push(context, createRoute(ListPage(token: widget.token))),
                                           child: MetricPanel(
                                             title: 'A commander',
@@ -256,12 +230,39 @@ class _HomePageState extends State<HomePage> {
                                             icon: Icons.shopping_cart_rounded,
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
+                                      ],
+                                    )
+                                  : Row(
+                                      children: [
+                                        Expanded(
+                                          child: GestureDetector(
+                                            onTap: () => Navigator.push(context, createRoute(ListPage(token: widget.token))),
+                                            child: MetricPanel(
+                                              title: 'Total des pièces',
+                                              value: '$totalParts',
+                                              accent: const Color(0xFF78BCEB),
+                                              icon: Icons.inventory_2_rounded,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: GestureDetector(
+                                            onTap: () => Navigator.push(context, createRoute(ListPage(token: widget.token))),
+                                            child: MetricPanel(
+                                              title: 'A commander',
+                                              value: '$orderAlertCount',
+                                              accent: const Color(0xFFE8A33D),
+                                              icon: Icons.shopping_cart_rounded,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -319,9 +320,7 @@ class _HomePageState extends State<HomePage> {
                                       if (widget.role == 'admin') {
                                         Navigator.push(
                                           context,
-                                          createRoute(
-                                            ListPage(token: widget.token),
-                                          ),
+                                          createRoute(ListPage(token: widget.token)),
                                         );
                                       }
                                     },
@@ -608,7 +607,7 @@ class _ActivityCardBody extends StatelessWidget {
                 );
               }),
               const SizedBox(width: 10),
-              const Text(
+              const TranslatedText(
                 'Activité',
                 style: TextStyle(
                   color: Color(0xFF6A7177),
