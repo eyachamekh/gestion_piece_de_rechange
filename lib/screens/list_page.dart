@@ -1799,17 +1799,7 @@ class _ListPageState extends State<ListPage> {
                                                                             11,
                                                                           ),
                                                                       child: Image.network(
-                                                                        img.toString().startsWith('http://') ||
-                                                                                img.toString().startsWith('https://')
-                                                                            ? img.toString()
-                                                                            : ApiConfig.uploadUrl(
-                                                                                img.toString()
-                                                                                    .replaceFirst('/uploads/', '')
-                                                                                    .split('\\')
-                                                                                    .last
-                                                                                    .split('/')
-                                                                                    .last,
-                                                                              ),
+                                                                        ApiConfig.uploadUrl(img.toString()),
                                                                         fit: BoxFit.cover,
                                                                         errorBuilder:
                                                                             (
