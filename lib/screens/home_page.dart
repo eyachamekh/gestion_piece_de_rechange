@@ -76,8 +76,8 @@ class _HomePageState extends State<HomePage> {
           final cardsColumns = constraints.maxWidth > 1040
               ? 3
               : constraints.maxWidth > 700
-                  ? 2
-                  : 1;
+              ? 2
+              : 1;
 
           return CustomScrollView(
             slivers: [
@@ -121,7 +121,10 @@ class _HomePageState extends State<HomePage> {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(16),
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFF2D3438), Color(0xFF13191D)],
+                                  colors: [
+                                    Color(0xFF2D3438),
+                                    Color(0xFF13191D),
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
@@ -193,74 +196,123 @@ class _HomePageState extends State<HomePage> {
                             height: 1.05,
                           ),
                         ),
-                        const SizedBox(height: 14),
-                        if (loading)
-                          const Center(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8),
-                              child: CircularProgressIndicator(
-                                color: Color(0xFFD8B394),
-                                strokeWidth: 2.2,
-                              ),
-                            ),
-                          )
-                        else
-                          Center(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 700),
-                              child: statsStacked
-                                  ? Column(
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () => Navigator.push(context, createRoute(ListPage(token: widget.token))),
-                                          child: MetricPanel(
-                                            title: 'Total des pièces',
-                                            value: '$totalParts',
-                                            accent: const Color(0xFF78BCEB),
-                                            icon: Icons.inventory_2_rounded,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 14),
-                                        GestureDetector(
-                                          onTap: () => Navigator.push(context, createRoute(ListPage(token: widget.token))),
-                                          child: MetricPanel(
-                                            title: 'A commander',
-                                            value: '$orderAlertCount',
-                                            accent: const Color(0xFFE8A33D),
-                                            icon: Icons.shopping_cart_rounded,
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : Row(
-                                      children: [
-                                        Expanded(
-                                          child: GestureDetector(
-                                            onTap: () => Navigator.push(context, createRoute(ListPage(token: widget.token))),
-                                            child: MetricPanel(
-                                              title: 'Total des pièces',
-                                              value: '$totalParts',
-                                              accent: const Color(0xFF78BCEB),
-                                              icon: Icons.inventory_2_rounded,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        Expanded(
-                                          child: GestureDetector(
-                                            onTap: () => Navigator.push(context, createRoute(ListPage(token: widget.token))),
-                                            child: MetricPanel(
-                                              title: 'A commander',
-                                              value: '$orderAlertCount',
-                                              accent: const Color(0xFFE8A33D),
-                                              icon: Icons.shopping_cart_rounded,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                        Visibility(
+                          visible: widget.role == 'admin',
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 14),
+                              if (loading)
+                                const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 8),
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFFD8B394),
+                                      strokeWidth: 2.2,
                                     ),
-                            ),
+                                  ),
+                                )
+                              else
+                                Center(
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 700,
+                                    ),
+                                    child: statsStacked
+                                        ? Column(
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () => Navigator.push(
+                                                  context,
+                                                  createRoute(
+                                                    ListPage(
+                                                      token: widget.token,
+                                                    ),
+                                                  ),
+                                                ),
+                                                child: MetricPanel(
+                                                  title: 'Total des pièces',
+                                                  value: '$totalParts',
+                                                  accent: const Color(
+                                                    0xFF78BCEB,
+                                                  ),
+                                                  icon:
+                                                      Icons.inventory_2_rounded,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 14),
+                                              GestureDetector(
+                                                onTap: () => Navigator.push(
+                                                  context,
+                                                  createRoute(
+                                                    ListPage(
+                                                      token: widget.token,
+                                                    ),
+                                                  ),
+                                                ),
+                                                child: MetricPanel(
+                                                  title: 'A commander',
+                                                  value: '$orderAlertCount',
+                                                  accent: const Color(
+                                                    0xFFE8A33D,
+                                                  ),
+                                                  icon: Icons
+                                                      .shopping_cart_rounded,
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        : Row(
+                                            children: [
+                                              Expanded(
+                                                child: GestureDetector(
+                                                  onTap: () => Navigator.push(
+                                                    context,
+                                                    createRoute(
+                                                      ListPage(
+                                                        token: widget.token,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  child: MetricPanel(
+                                                    title: 'Total des pièces',
+                                                    value: '$totalParts',
+                                                    accent: const Color(
+                                                      0xFF78BCEB,
+                                                    ),
+                                                    icon: Icons
+                                                        .inventory_2_rounded,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 16),
+                                              Expanded(
+                                                child: GestureDetector(
+                                                  onTap: () => Navigator.push(
+                                                    context,
+                                                    createRoute(
+                                                      ListPage(
+                                                        token: widget.token,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  child: MetricPanel(
+                                                    title: 'A commander',
+                                                    value: '$orderAlertCount',
+                                                    accent: const Color(
+                                                      0xFFE8A33D,
+                                                    ),
+                                                    icon: Icons
+                                                        .shopping_cart_rounded,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                  ),
+                                ),
+                            ],
                           ),
+                        ),
                       ],
                     ),
                   ),
@@ -308,37 +360,45 @@ class _HomePageState extends State<HomePage> {
                                     accent: const Color(0xFFB9855D),
                                     onTap: () => Navigator.push(
                                       context,
-                                      createRoute(ScanPage(token: widget.token)),
+                                      createRoute(
+                                        ScanPage(
+                                          token: widget.token,
+                                          role: widget.role,
+                                        ),
+                                      ),
                                     ),
                                     child: _ScanCardBody(),
                                   ),
                                   QuickActionCard(
                                     title: t('Inventaire des pièces'),
                                     accent: const Color(0xFFB9855D),
-                                    onTap: () {
-                                      if (widget.role == 'admin') {
-                                        Navigator.push(
-                                          context,
-                                          createRoute(ListPage(token: widget.token)),
-                                        );
-                                      }
-                                    },
-                                    child: _InventoryCardBody(),
-                                  ),
-                                  QuickActionCard(
-                                    title: t('Historique d\'activité'),
-                                    accent: const Color(0xFFB9855D),
                                     onTap: () => Navigator.push(
                                       context,
                                       createRoute(
-                                        HistoryPage(
-                                          history: appHistory,
+                                        ListPage(
                                           token: widget.token,
+                                          role: widget.role,
                                         ),
                                       ),
                                     ),
-                                    child: _ActivityCardBody(),
+                                    child: _InventoryCardBody(),
                                   ),
+                                  if (widget.role == 'admin')
+                                    QuickActionCard(
+                                      title: t('Historique d\'activité'),
+                                      accent: const Color(0xFFB9855D),
+                                      onTap: () => Navigator.push(
+                                        context,
+                                        createRoute(
+                                          HistoryPage(
+                                            history: appHistory,
+                                            token: widget.token,
+                                            role: widget.role,
+                                          ),
+                                        ),
+                                      ),
+                                      child: _ActivityCardBody(),
+                                    ),
                                 ],
                               ),
                             ),
@@ -569,9 +629,7 @@ class _ActivityCardBody extends StatelessWidget {
             child: SizedBox(
               width: 150,
               height: 120,
-              child: CustomPaint(
-                painter: ClockPainter(),
-              ),
+              child: CustomPaint(painter: ClockPainter()),
             ),
           ),
         ),
@@ -586,9 +644,7 @@ class _ActivityCardBody extends StatelessWidget {
                 child: SizedBox(
                   height: 2,
                   child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: Color(0xFF243A4F),
-                    ),
+                    decoration: BoxDecoration(color: Color(0xFF243A4F)),
                   ),
                 ),
               ),
@@ -599,7 +655,9 @@ class _ActivityCardBody extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: index == 2 ? const Color(0xFFB9855D) : const Color(0xFFB9BDC0),
+                      color: index == 2
+                          ? const Color(0xFFB9855D)
+                          : const Color(0xFFB9BDC0),
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -626,15 +684,30 @@ class ClockPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final outer = Paint()..color = const Color(0xFFEBF2F8)..style = PaintingStyle.fill;
-    final inner = Paint()..color = const Color(0xFFCBD6DE)..style = PaintingStyle.fill;
-    final rim = Paint()..color = const Color(0xFF1F3043)..style = PaintingStyle.stroke..strokeWidth = 3;
+    final outer = Paint()
+      ..color = const Color(0xFFEBF2F8)
+      ..style = PaintingStyle.fill;
+    final inner = Paint()
+      ..color = const Color(0xFFCBD6DE)
+      ..style = PaintingStyle.fill;
+    final rim = Paint()
+      ..color = const Color(0xFF1F3043)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
     canvas.drawCircle(center, 42, outer);
     canvas.drawCircle(center, 32, inner);
     canvas.drawCircle(center, 42, rim);
 
-    final hand = Paint()..color = const Color(0xFFB9855D)..strokeWidth = 4..strokeCap = StrokeCap.round..style = PaintingStyle.stroke;
-    final shortHand = Paint()..color = const Color(0xFF1F3043)..strokeWidth = 4..strokeCap = StrokeCap.round..style = PaintingStyle.stroke;
+    final hand = Paint()
+      ..color = const Color(0xFFB9855D)
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    final shortHand = Paint()
+      ..color = const Color(0xFF1F3043)
+      ..strokeWidth = 4
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
     canvas.drawLine(center, Offset(center.dx + 14, center.dy - 18), hand);
     canvas.drawLine(center, Offset(center.dx - 18, center.dy + 14), shortHand);
 
@@ -651,7 +724,9 @@ class ClockPainter extends CustomPainter {
       canvas.drawLine(
         start,
         end,
-        Paint()..color = const Color(0xFF7B8792)..strokeWidth = 2,
+        Paint()
+          ..color = const Color(0xFF7B8792)
+          ..strokeWidth = 2,
       );
     }
   }

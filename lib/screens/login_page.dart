@@ -29,7 +29,13 @@ class LoginPage extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(18),
-                        boxShadow: const [BoxShadow(color: Color(0x30000000), blurRadius: 24, offset: Offset(0, 8))],
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x30000000),
+                            blurRadius: 24,
+                            offset: Offset(0, 8),
+                          ),
+                        ],
                       ),
                       child: stbgLogo(height: 60),
                     ),
@@ -63,7 +69,13 @@ class LoginPage extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: const [BoxShadow(color: Color(0x30000000), blurRadius: 32, offset: Offset(0, 10))],
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x30000000),
+                      blurRadius: 32,
+                      offset: Offset(0, 10),
+                    ),
+                  ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,27 +94,59 @@ class LoginPage extends StatelessWidget {
                       style: TextStyle(color: STBG.textSecondary, fontSize: 13),
                     ),
                     const SizedBox(height: 28),
-                    _LoginField(controller: emailCtrl, label: 'Email', icon: Icons.alternate_email),
+                    _LoginField(
+                      controller: emailCtrl,
+                      label: 'Email',
+                      icon: Icons.alternate_email,
+                    ),
                     const SizedBox(height: 16),
-                    _LoginField(controller: passCtrl, label: 'Password', icon: Icons.lock_outline, obscure: true),
+                    _LoginField(
+                      controller: passCtrl,
+                      label: 'Password',
+                      icon: Icons.lock_outline,
+                      obscure: true,
+                    ),
                     const SizedBox(height: 28),
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () async {
-                          final res = await login(emailCtrl.text, passCtrl.text);
+                          final res = await login(
+                            emailCtrl.text,
+                            passCtrl.text,
+                          );
                           if (res['success'] == true) {
+                            final token = res['token']?.toString() ?? '';
+                            final role =
+                                res['role']?.toString().toLowerCase() == 'admin'
+                                ? 'admin'
+                                : 'user';
+                            if (token.isEmpty) {
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Login response is missing a token.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
                             Navigator.pushReplacement(
                               context,
-                              createRoute(HomePage(role: res['role'], token: res['token'])),
+                              createRoute(HomePage(role: role, token: token)),
                             );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: const TranslatedText('Login failed. Please check your credentials.'),
+                                content: const TranslatedText(
+                                  'Login failed. Please check your credentials.',
+                                ),
                                 backgroundColor: STBG.danger,
                                 behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
                               ),
                             );
                           }
@@ -110,11 +154,18 @@ class LoginPage extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           backgroundColor: STBG.navy,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         child: const TranslatedText(
                           'Sign In',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15, letterSpacing: 0.5),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                       ),
                     ),
@@ -124,7 +175,8 @@ class LoginPage extends StatelessWidget {
                       children: [
                         ValueListenableBuilder<String>(
                           valueListenable: langNotifier,
-                          builder: (_, lang, __) => _LangChip(lang: lang, onTap: toggleLanguage),
+                          builder: (_, lang, __) =>
+                              _LangChip(lang: lang, onTap: toggleLanguage),
                         ),
                       ],
                     ),
@@ -134,7 +186,10 @@ class LoginPage extends StatelessWidget {
               const SizedBox(height: 40),
               Text(
                 '© ${DateTime.now().year} STBG — All rights reserved',
-                style: TextStyle(color: Colors.white.withOpacity(0.25), fontSize: 11),
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.25),
+                  fontSize: 11,
+                ),
               ),
               const SizedBox(height: 20),
             ],
@@ -151,7 +206,12 @@ class _LoginField extends StatelessWidget {
   final IconData icon;
   final bool obscure;
 
-  const _LoginField({required this.controller, required this.label, required this.icon, this.obscure = false});
+  const _LoginField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.obscure = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +224,10 @@ class _LoginField extends StatelessWidget {
           obscureText: obscure,
           decoration: InputDecoration(
             labelText: t(label),
-            labelStyle: const TextStyle(color: STBG.textSecondary, fontSize: 14),
+            labelStyle: const TextStyle(
+              color: STBG.textSecondary,
+              fontSize: 14,
+            ),
             prefixIcon: Icon(icon, color: STBG.steel, size: 20),
             filled: true,
             fillColor: STBG.surface,
@@ -191,7 +254,11 @@ class _LangChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labels = {'en': '🇬🇧 English', 'fr': '🇫🇷 Français', 'ar': '🇹🇳 العربية'};
+    final labels = {
+      'en': '🇬🇧 English',
+      'fr': '🇫🇷 Français',
+      'ar': '🇹🇳 العربية',
+    };
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -204,7 +271,10 @@ class _LangChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(labels[lang] ?? '', style: const TextStyle(fontSize: 13, color: STBG.textPrimary)),
+            Text(
+              labels[lang] ?? '',
+              style: const TextStyle(fontSize: 13, color: STBG.textPrimary),
+            ),
             const SizedBox(width: 6),
             const Icon(Icons.swap_horiz, size: 14, color: STBG.textSecondary),
           ],

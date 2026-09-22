@@ -6,8 +6,8 @@ import 'package:gestion_piece_de_rechange/utils/app_utils.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const STBGApp());
   await _initializeAppData();
+  runApp(const STBGApp());
 }
 
 Future<void> _initializeAppData() async {

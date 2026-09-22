@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -30,8 +30,14 @@ class _GalleryScrollBehavior extends MaterialScrollBehavior {
 class ResultPage extends StatefulWidget {
   final Map data;
   final String? token;
+  final String role;
 
-  const ResultPage({required this.data, this.token, super.key});
+  const ResultPage({
+    required this.data,
+    this.token,
+    this.role = 'user',
+    super.key,
+  });
 
   @override
   State<ResultPage> createState() => _ResultPageState();
@@ -165,6 +171,7 @@ Téléphone : 71 434 880
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = widget.role == 'admin';
     final int qty = widget.data['quantity'] ?? 0;
     final bool lowStock = qty <= 5;
     final bool mustOrder = _ssResult?.mustOrder ?? lowStock;
@@ -200,360 +207,123 @@ Téléphone : 71 434 880
         children: [
           Column(
             children: [
-          STBGHeader(
-            title: 'Part Details',
-            subtitle: 'Identified spare part information',
-            showBack: true,
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  const SizedBox(height: 12),
-                  if (widget.data['matchSource'] != null ||
-                      widget.data['confidence'] != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Card(
-                        child: ListTile(
-                          leading: const Icon(Icons.insights_outlined),
-                          title: TranslatedText(
-                            widget.data['matchSource'] == 'visual'
-                                ? 'Visual gallery match'
-                                : 'OCR and visual evidence',
-                          ),
-                          subtitle: TranslatedText(
-                            widget.data['confidence'] is num
-                                ? 'Similarity: '
-                                      '${((widget.data['confidence'] as num).toDouble() * 100).toStringAsFixed(1)}%'
-                                : (widget.data['ocrText'] ??
-                                          'Reference evidence used')
-                                      .toString(),
+              STBGHeader(
+                title: 'Part Details',
+                subtitle: 'Identified spare part information',
+                showBack: true,
+              ),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      if (isAdmin &&
+                          (widget.data['matchSource'] != null ||
+                              widget.data['confidence'] != null))
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Card(
+                            child: ListTile(
+                              leading: const Icon(Icons.insights_outlined),
+                              title: TranslatedText(
+                                widget.data['matchSource'] == 'visual'
+                                    ? 'Visual gallery match'
+                                    : 'OCR and visual evidence',
+                              ),
+                              subtitle: TranslatedText(
+                                widget.data['confidence'] is num
+                                    ? 'Similarity: '
+                                          '${((widget.data['confidence'] as num).toDouble() * 100).toStringAsFixed(1)}%'
+                                    : (widget.data['ocrText'] ??
+                                              'Reference evidence used')
+                                          .toString(),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  if (widget.data['matchSource'] != null ||
-                      widget.data['confidence'] != null)
-                    const SizedBox(height: 8),
-                  if (imageValues.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              _ActionBtn(
-                                icon: Icons.remove_circle_outline_rounded,
-                                label: 'Take',
-                                color: Colors.orange,
-                                onTap: _showTakeDialog,
-                              ),
-                              const SizedBox(width: 8),
-                              _ActionBtn(
-                                icon: Icons.edit_outlined,
-                                label: 'Edit',
-                                color: STBG.success,
-                                onTap: _showEditDialog,
-                              ),
-                              const SizedBox(width: 8),
-                              _ActionBtn(
-                                icon: Icons.delete_outline_rounded,
-                                label: 'Delete',
-                                color: STBG.danger,
-                                onTap: _deletePart,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            height: galleryHeight,
-                            child: ScrollConfiguration(
-                              behavior: _GalleryScrollBehavior(),
-                              child: PageView.builder(
-                                controller: _imageController,
-                                physics: const PageScrollPhysics(),
-                                itemCount: imageValues.length,
-                                onPageChanged: (index) =>
-                                    setState(() => _currentImageIndex = index),
-                                itemBuilder: (context, index) {
-                                  final url = ApiConfig.uploadUrl(imageValues[index]);
-                                  final tag = 'part-${widget.data['id']}-img-$index';
-                                  return Container(
-                                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(16),
-                                      color: Colors.grey[200],
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(16),
-                                      child: GestureDetector(
-                                        onTap: () => _openImage(url, tag),
-                                        child: Hero(
-                                          tag: tag,
-                                          child: Image.network(
-                                            url,
-                                            fit: BoxFit.contain,
-                                            errorBuilder: (context, error, stack) =>
-                                                const Icon(Icons.broken_image, color: Colors.grey, size: 42),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                          if (imageValues.length > 1) ...[
-                            const SizedBox(height: 10),
-                            Center(
-                              child: Text(
-                                '${_currentImageIndex + 1} / ${imageValues.length}',
-                                style: const TextStyle(
-                                  color: STBG.textSecondary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: List.generate(
-                                imageValues.length,
-                                (index) => AnimatedContainer(
-                                  duration: const Duration(milliseconds: 180),
-                                  width: _currentImageIndex == index ? 18 : 8,
-                                  height: 8,
-                                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                                  decoration: BoxDecoration(
-                                    color: _currentImageIndex == index ? STBG.navy : Colors.grey[300],
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: statusColor.withOpacity(0.3),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(statusIcon, color: statusColor, size: 20),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: TranslatedText(
-                                  statusText,
-                                  style: TextStyle(
-                                    color: statusColor,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (isOrderAlert && _ssResult != null) ...[
-                          const SizedBox(height: 10),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF8E1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: STBG.gold.withOpacity(0.4),
-                              ),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.analytics_outlined,
-                                      size: 14,
-                                      color: STBG.gold,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    const Text(
-                                      'Analyse stock de sécurité',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 12,
-                                        color: Color(0xFF7A4F00),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                Row(
-                                  children: [
-                                    SSMetric(
-                                      label: 'Stock actuel',
-                                      value: '${_ssResult!.currentQty}',
-                                      color: STBG.danger,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    SSMetric(
-                                      label: 'Stock sécurité',
-                                      value: '${_ssResult!.safetyStock}',
-                                      color: STBG.steel,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    SSMetric(
-                                      label: 'Délai DA',
-                                      value:
-                                          '${_ssResult!.delaiJours.toStringAsFixed(0)} j',
-                                      color: STBG.success,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    SSMetric(
-                                      label: 'Conso/jour',
-                                      value: _ssResult!.consommationJour
-                                          .toStringAsFixed(2),
-                                      color: const Color(0xFF7B1FA2),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: STBG.gold.withOpacity(0.12),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Text(
-                                    '⚠️  Quantité actuelle ≤ stock de sécurité\nUne demande d\'achat (DA) doit être passée immédiatement.',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Color(0xFF7A4F00),
-                                      height: 1.5,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 16),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Color(0x0D000000),
-                                blurRadius: 12,
-                                offset: Offset(0, 4),
-                              ),
-                            ],
-                          ),
+                      if (isAdmin &&
+                          (widget.data['matchSource'] != null ||
+                              widget.data['confidence'] != null))
+                        const SizedBox(height: 8),
+                      if (imageValues.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              InfoRow(
-                                icon: Icons.tag_rounded,
-                                label: 'Reference',
-                                value: widget.data['reference'] ?? '-',
-                              ),
-                              const SectionDivider(),
-                              InfoRow(
-                                icon: Icons.location_on_outlined,
-                                label: 'Location',
-                                value: widget.data['location'] ?? '-',
-                              ),
-                              const SectionDivider(),
-                              InfoRow(
-                                icon: Icons.inventory_2_outlined,
-                                label: 'Quantity',
-                                value: qty.toString(),
-                                badge: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: statusColor.withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: statusColor.withOpacity(0.3),
+                              if (isAdmin)
+                                Row(
+                                  children: [
+                                    _ActionBtn(
+                                      icon: Icons.remove_circle_outline_rounded,
+                                      label: 'Take',
+                                      color: Colors.orange,
+                                      onTap: _showTakeDialog,
                                     ),
-                                  ),
-                                  child: Builder(
-                                    builder: (ctx) {
-                                      final lang = langNotifier.value;
-                                      final String badgeLabel;
-                                      if (isOrderAlert) {
-                                        badgeLabel = lang == 'fr'
-                                            ? 'À commander'
-                                            : (lang == 'ar' ? 'طلب' : 'Order');
-                                      } else {
-                                        badgeLabel = lang == 'fr'
-                                            ? (mustOrder
-                                                  ? 'Stock faible'
-                                                  : 'En stock')
-                                            : (lang == 'ar'
-                                                  ? (mustOrder
-                                                        ? 'مخزون منخفض'
-                                                        : 'متوفر')
-                                                  : (mustOrder
-                                                        ? 'Low Stock'
-                                                        : 'In Stock'));
-                                      }
-
-                                      return InkWell(
-                                        borderRadius: BorderRadius.circular(20),
-                                        onTap: isOrderAlert
-                                            ? _sendOrderEmail
-                                            : null,
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6.0,
-                                            vertical: 2.0,
+                                    const SizedBox(width: 8),
+                                    _ActionBtn(
+                                      icon: Icons.edit_outlined,
+                                      label: 'Edit',
+                                      color: STBG.success,
+                                      onTap: _showEditDialog,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    _ActionBtn(
+                                      icon: Icons.delete_outline_rounded,
+                                      label: 'Delete',
+                                      color: STBG.danger,
+                                      onTap: _deletePart,
+                                    ),
+                                  ],
+                                ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                height: galleryHeight,
+                                child: ScrollConfiguration(
+                                  behavior: _GalleryScrollBehavior(),
+                                  child: PageView.builder(
+                                    controller: _imageController,
+                                    physics: const PageScrollPhysics(),
+                                    itemCount: imageValues.length,
+                                    onPageChanged: (index) => setState(
+                                      () => _currentImageIndex = index,
+                                    ),
+                                    itemBuilder: (context, index) {
+                                      final url = ApiConfig.uploadUrl(
+                                        imageValues[index],
+                                      );
+                                      final tag =
+                                          'part-${widget.data['id']}-img-$index';
+                                      return Container(
+                                        margin: const EdgeInsets.symmetric(
+                                          horizontal: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
                                           ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                statusIcon,
-                                                size: 11,
-                                                color: statusColor,
+                                          color: Colors.grey[200],
+                                        ),
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                          child: GestureDetector(
+                                            onTap: () => _openImage(url, tag),
+                                            child: Hero(
+                                              tag: tag,
+                                              child: Image.network(
+                                                url,
+                                                fit: BoxFit.contain,
+                                                errorBuilder:
+                                                    (context, error, stack) =>
+                                                        const Icon(
+                                                          Icons.broken_image,
+                                                          color: Colors.grey,
+                                                          size: 42,
+                                                        ),
                                               ),
-                                              const SizedBox(width: 6),
-                                              Text(
-                                                badgeLabel,
-                                                style: TextStyle(
-                                                  color: statusColor,
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
-                                              ),
-                                            ],
+                                            ),
                                           ),
                                         ),
                                       );
@@ -561,16 +331,296 @@ Téléphone : 71 434 880
                                   ),
                                 ),
                               ),
+                              if (imageValues.length > 1) ...[
+                                const SizedBox(height: 10),
+                                Center(
+                                  child: Text(
+                                    '${_currentImageIndex + 1} / ${imageValues.length}',
+                                    style: const TextStyle(
+                                      color: STBG.textSecondary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: List.generate(
+                                    imageValues.length,
+                                    (index) => AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 180,
+                                      ),
+                                      width: _currentImageIndex == index
+                                          ? 18
+                                          : 8,
+                                      height: 8,
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: _currentImageIndex == index
+                                            ? STBG.navy
+                                            : Colors.grey[300],
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ],
                           ),
                         ),
-                      ],
-                    ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                        child: Column(
+                          children: [
+                            if (isAdmin)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: statusColor.withOpacity(0.08),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: statusColor.withOpacity(0.3),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      statusIcon,
+                                      color: statusColor,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: TranslatedText(
+                                        statusText,
+                                        style: TextStyle(
+                                          color: statusColor,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            if (isAdmin &&
+                                isOrderAlert &&
+                                _ssResult != null) ...[
+                              const SizedBox(height: 10),
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(14),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFF8E1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: STBG.gold.withOpacity(0.4),
+                                  ),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.analytics_outlined,
+                                          size: 14,
+                                          color: STBG.gold,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        const Text(
+                                          'Analyse stock de sécurité',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12,
+                                            color: Color(0xFF7A4F00),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Row(
+                                      children: [
+                                        SSMetric(
+                                          label: 'Stock actuel',
+                                          value: '${_ssResult!.currentQty}',
+                                          color: STBG.danger,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        SSMetric(
+                                          label: 'Délai DA',
+                                          value:
+                                              '${_ssResult!.delaiJours.toStringAsFixed(0)} j',
+                                          color: STBG.success,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: STBG.gold.withOpacity(0.12),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Text(
+                                        '⚠️  Quantité actuelle ≤ stock de sécurité\nUne demande d\'achat (DA) doit être passée immédiatement.',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Color(0xFF7A4F00),
+                                          height: 1.5,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 16),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(18),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x0D000000),
+                                    blurRadius: 12,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                children: [
+                                  InfoRow(
+                                    icon: Icons.tag_rounded,
+                                    label: 'Reference',
+                                    value: widget.data['reference'] ?? '-',
+                                  ),
+                                  const SectionDivider(),
+                                  InfoRow(
+                                    icon: Icons.factory_outlined,
+                                    label: 'Fournisseur reference',
+                                    value:
+                                        widget.data['fournisseur_reference'] ??
+                                        '-',
+                                  ),
+                                  const SectionDivider(),
+                                  InfoRow(
+                                    icon: Icons.inventory_2_outlined,
+                                    label: 'Part name',
+                                    value: widget.data['name'] ?? '-',
+                                  ),
+                                  const SectionDivider(),
+                                  InfoRow(
+                                    icon: Icons.location_on_outlined,
+                                    label: 'Location',
+                                    value: widget.data['location'] ?? '-',
+                                  ),
+                                  const SectionDivider(),
+                                  if (isAdmin)
+                                    InfoRow(
+                                      icon: Icons.inventory_2_outlined,
+                                      label: 'Quantity',
+                                      value: qty.toString(),
+                                      badge: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: statusColor.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          border: Border.all(
+                                            color: statusColor.withOpacity(0.3),
+                                          ),
+                                        ),
+                                        child: Builder(
+                                          builder: (ctx) {
+                                            final lang = langNotifier.value;
+                                            final String badgeLabel;
+                                            if (isOrderAlert) {
+                                              badgeLabel = lang == 'fr'
+                                                  ? 'À commander'
+                                                  : (lang == 'ar'
+                                                        ? 'طلب'
+                                                        : 'Order');
+                                            } else {
+                                              badgeLabel = lang == 'fr'
+                                                  ? (mustOrder
+                                                        ? 'Stock faible'
+                                                        : 'En stock')
+                                                  : (lang == 'ar'
+                                                        ? (mustOrder
+                                                              ? 'مخزون منخفض'
+                                                              : 'متوفر')
+                                                        : (mustOrder
+                                                              ? 'Low Stock'
+                                                              : 'In Stock'));
+                                            }
+
+                                            return InkWell(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              onTap: isOrderAlert
+                                                  ? _sendOrderEmail
+                                                  : null,
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6.0,
+                                                      vertical: 2.0,
+                                                    ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      statusIcon,
+                                                      size: 11,
+                                                      color: statusColor,
+                                                    ),
+                                                    const SizedBox(width: 6),
+                                                    Text(
+                                                      badgeLabel,
+                                                      style: TextStyle(
+                                                        color: statusColor,
+                                                        fontSize: 11,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
             ],
           ),
           Positioned(
@@ -580,6 +630,7 @@ Téléphone : 71 434 880
             child: CustomBottomNavigationBar(
               currentIndex: 0,
               token: widget.token,
+              role: widget.role,
             ),
           ),
         ],
@@ -594,7 +645,9 @@ Téléphone : 71 434 880
     final rotated = img.copyRotate(decoded, angle: 90);
     final outBytes = img.encodeJpg(rotated);
     final tmp = await getTemporaryDirectory();
-    final newFile = File('${tmp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    final newFile = File(
+      '${tmp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
     await newFile.writeAsBytes(outBytes);
     return newFile;
   }
@@ -606,7 +659,9 @@ Téléphone : 71 434 880
     final rotated = img.copyRotate(decoded, angle: 90);
     final outBytes = img.encodeJpg(rotated);
     final tmp = await getTemporaryDirectory();
-    final file = File('${tmp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    final file = File(
+      '${tmp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
     await file.writeAsBytes(outBytes);
     return file;
   }
@@ -614,10 +669,17 @@ Téléphone : 71 434 880
   void _showEditDialog() {
     final refCtrl = TextEditingController(text: widget.data['reference'] ?? '');
     final locCtrl = TextEditingController(text: widget.data['location'] ?? '');
-    final qtyCtrl = TextEditingController(text: widget.data['quantity'].toString());
+    final qtyCtrl = TextEditingController(
+      text: widget.data['quantity'].toString(),
+    );
     final nameCtrl = TextEditingController(text: widget.data['name'] ?? '');
-    final fournCtrl = TextEditingController(text: widget.data['fournisseur_reference'] ?? '');
-    final List<String?> existing = List.generate(7, (i) => widget.data['image${i + 1}'] as String?);
+    final fournCtrl = TextEditingController(
+      text: widget.data['fournisseur_reference'] ?? '',
+    );
+    final List<String?> existing = List.generate(
+      7,
+      (i) => widget.data['image${i + 1}'] as String?,
+    );
     final List<XFile?> newImages = List<XFile?>.filled(7, null);
     final picker = ImagePicker();
 
@@ -633,8 +695,12 @@ Téléphone : 71 434 880
           children: [
             const SizedBox(height: 12),
             Container(
-              width: 42, height: 4,
-              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(4)),
+              width: 42,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(4),
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
@@ -655,7 +721,9 @@ Téléphone : 71 434 880
       context: context,
       builder: (_) => StatefulBuilder(
         builder: (ctx, setD) => AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
           title: const TranslatedText('Edit Part'),
           content: SingleChildScrollView(
             child: Column(
@@ -664,19 +732,41 @@ Téléphone : 71 434 880
                 ValueListenableBuilder<String>(
                   valueListenable: langNotifier,
                   builder: (_, lang, __) => ValueListenableBuilder<int>(
-                    valueListenable: MLKitTranslationService.instance.translationVersion,
+                    valueListenable:
+                        MLKitTranslationService.instance.translationVersion,
                     builder: (_, __, ___) => Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        DialogField(ctrl: refCtrl, label: t('Reference'), icon: Icons.tag_rounded),
+                        DialogField(
+                          ctrl: refCtrl,
+                          label: t('Reference'),
+                          icon: Icons.tag_rounded,
+                        ),
                         const SizedBox(height: 10),
-                        DialogField(ctrl: nameCtrl, label: t('Part Name'), icon: Icons.label_outline_rounded),
+                        DialogField(
+                          ctrl: nameCtrl,
+                          label: t('Part Name'),
+                          icon: Icons.label_outline_rounded,
+                        ),
                         const SizedBox(height: 10),
-                        DialogField(ctrl: fournCtrl, label: t('Supplier Reference'), icon: Icons.business_outlined),
+                        DialogField(
+                          ctrl: fournCtrl,
+                          label: t('Supplier Reference'),
+                          icon: Icons.business_outlined,
+                        ),
                         const SizedBox(height: 10),
-                        DialogField(ctrl: locCtrl, label: t('Location'), icon: Icons.location_on_outlined),
+                        DialogField(
+                          ctrl: locCtrl,
+                          label: t('Location'),
+                          icon: Icons.location_on_outlined,
+                        ),
                         const SizedBox(height: 10),
-                        DialogField(ctrl: qtyCtrl, label: t('Quantity'), icon: Icons.numbers_rounded, numeric: true),
+                        DialogField(
+                          ctrl: qtyCtrl,
+                          label: t('Quantity'),
+                          icon: Icons.numbers_rounded,
+                          numeric: true,
+                        ),
                       ],
                     ),
                   ),
@@ -688,14 +778,20 @@ Téléphone : 71 434 880
                   children: [
                     for (int i = 0; i < 7; i++)
                       SizedBox(
-                        width: 90, height: 90,
+                        width: 90,
+                        height: 90,
                         child: GestureDetector(
                           onTap: () async {
                             final source = await pickSource();
                             if (source == null) return;
-                            final picked = await picker.pickImage(source: source);
+                            final picked = await picker.pickImage(
+                              source: source,
+                            );
                             if (picked != null) {
-                              setD(() { newImages[i] = picked; existing[i] = null; });
+                              setD(() {
+                                newImages[i] = picked;
+                                existing[i] = null;
+                              });
                             }
                           },
                           child: Stack(
@@ -704,50 +800,106 @@ Téléphone : 71 434 880
                                 decoration: BoxDecoration(
                                   color: STBG.surface,
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: STBG.steel.withOpacity(0.25)),
+                                  border: Border.all(
+                                    color: STBG.steel.withOpacity(0.25),
+                                  ),
                                   image: newImages[i] != null
-                                      ? DecorationImage(image: FileImage(File(newImages[i]!.path)), fit: BoxFit.cover)
+                                      ? DecorationImage(
+                                          image: FileImage(
+                                            File(newImages[i]!.path),
+                                          ),
+                                          fit: BoxFit.cover,
+                                        )
                                       : existing[i] != null
-                                          ? DecorationImage(image: NetworkImage(ApiConfig.uploadUrl(existing[i]!)), fit: BoxFit.cover)
-                                          : null,
+                                      ? DecorationImage(
+                                          image: NetworkImage(
+                                            ApiConfig.uploadUrl(existing[i]!),
+                                          ),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
                                 ),
-                                child: (newImages[i] == null && existing[i] == null)
-                                    ? const Center(child: Icon(Icons.add_a_photo_outlined, color: STBG.steel, size: 24))
+                                child:
+                                    (newImages[i] == null &&
+                                        existing[i] == null)
+                                    ? const Center(
+                                        child: Icon(
+                                          Icons.add_a_photo_outlined,
+                                          color: STBG.steel,
+                                          size: 24,
+                                        ),
+                                      )
                                     : null,
                               ),
                               if (newImages[i] != null || existing[i] != null)
                                 Positioned(
-                                  top: 4, right: 4,
+                                  top: 4,
+                                  right: 4,
                                   child: GestureDetector(
                                     behavior: HitTestBehavior.opaque,
-                                    onTap: () => setD(() { newImages[i] = null; existing[i] = null; }),
+                                    onTap: () => setD(() {
+                                      newImages[i] = null;
+                                      existing[i] = null;
+                                    }),
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
-                                      decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                                      child: const Icon(Icons.close, color: Colors.white, size: 14),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 14,
+                                      ),
                                     ),
                                   ),
                                 ),
                               if (newImages[i] != null || existing[i] != null)
                                 Positioned(
-                                  bottom: 4, right: 4,
+                                  bottom: 4,
+                                  right: 4,
                                   child: GestureDetector(
                                     behavior: HitTestBehavior.opaque,
                                     onTap: () async {
                                       try {
                                         if (newImages[i] != null) {
-                                          final rotated = await _rotateImageFile(File(newImages[i]!.path));
-                                          setD(() => newImages[i] = XFile(rotated.path));
+                                          final rotated =
+                                              await _rotateImageFile(
+                                                File(newImages[i]!.path),
+                                              );
+                                          setD(
+                                            () => newImages[i] = XFile(
+                                              rotated.path,
+                                            ),
+                                          );
                                         } else if (existing[i] != null) {
-                                          final rotated = await _rotateNetworkImage(ApiConfig.uploadUrl(existing[i]!));
-                                          setD(() { newImages[i] = XFile(rotated.path); existing[i] = null; });
+                                          final rotated =
+                                              await _rotateNetworkImage(
+                                                ApiConfig.uploadUrl(
+                                                  existing[i]!,
+                                                ),
+                                              );
+                                          setD(() {
+                                            newImages[i] = XFile(rotated.path);
+                                            existing[i] = null;
+                                          });
                                         }
-                                      } catch (e) { debugPrint('Rotate error: $e'); }
+                                      } catch (e) {
+                                        debugPrint('Rotate error: $e');
+                                      }
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
-                                      decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                                      child: const Icon(Icons.rotate_right, color: Colors.white, size: 14),
+                                      decoration: const BoxDecoration(
+                                        color: Colors.black54,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.rotate_right,
+                                        color: Colors.white,
+                                        size: 14,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -768,25 +920,43 @@ Téléphone : 71 434 880
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: STBG.navy,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               onPressed: () async {
-                final uri = Uri.parse(ApiConfig.url('/api/parts/${widget.data['id']}'));
+                final previousQuantity =
+                    int.tryParse(widget.data['quantity'].toString()) ?? 0;
+                final updatedQuantity = int.tryParse(qtyCtrl.text.trim());
+                if (updatedQuantity == null || updatedQuantity < 0) return;
+
+                final uri = Uri.parse(
+                  ApiConfig.url('/api/parts/${widget.data['id']}'),
+                );
                 final req = http.MultipartRequest('PUT', uri)
                   ..headers['Authorization'] = 'Bearer ${widget.token}'
                   ..fields['reference'] = refCtrl.text
                   ..fields['location'] = locCtrl.text
-                  ..fields['quantity'] = qtyCtrl.text
+                  ..fields['quantity'] = updatedQuantity.toString()
                   ..fields['name'] = nameCtrl.text
                   ..fields['fournisseur_reference'] = fournCtrl.text;
                 for (int i = 0; i < 7; i++) {
                   final image = newImages[i];
                   if (image != null) {
-                    req.files.add(await http.MultipartFile.fromPath('image${i + 1}', image.path));
+                    req.files.add(
+                      await http.MultipartFile.fromPath(
+                        'image${i + 1}',
+                        image.path,
+                      ),
+                    );
                     try {
-                      final emb = await imageClassifierService.getEmbedding(File(image.path));
+                      final emb = await imageClassifierService.getEmbedding(
+                        File(image.path),
+                      );
                       req.fields['embedding${i + 1}'] = jsonEncode(emb);
-                    } catch (e) { debugPrint('Embedding error: $e'); }
+                    } catch (e) {
+                      debugPrint('Embedding error: $e');
+                    }
                   } else if (existing[i] == null) {
                     req.fields['clear_image${i + 1}'] = '1';
                   }
@@ -794,22 +964,42 @@ Téléphone : 71 434 880
                 final streamed = await req.send();
                 if (!mounted) return;
                 if (streamed.statusCode == 200 || streamed.statusCode == 201) {
+                  if (updatedQuantity != previousQuantity) {
+                    final now = formatLocalDateTimeForApi(DateTime.now());
+                    addToHistory({
+                      'reference': refCtrl.text,
+                      'name': nameCtrl.text,
+                      'takenBy': 'Admin',
+                      'quantity': (updatedQuantity - previousQuantity).abs(),
+                      'previousQuantity': previousQuantity,
+                      'newQuantity': updatedQuantity,
+                      'action': updatedQuantity > previousQuantity
+                          ? 'added'
+                          : 'reduced',
+                      'date': now,
+                    });
+                    await saveHistory();
+                  }
                   setState(() {
                     widget.data['reference'] = refCtrl.text;
                     widget.data['location'] = locCtrl.text;
-                    widget.data['quantity'] = int.tryParse(qtyCtrl.text) ?? 0;
+                    widget.data['quantity'] = updatedQuantity;
                     widget.data['name'] = nameCtrl.text;
                     widget.data['fournisseur_reference'] = fournCtrl.text;
                     for (int i = 0; i < 7; i++) {
-                      if (newImages[i] != null) widget.data['image${i + 1}'] = newImages[i]!.path;
-                      else if (existing[i] == null) widget.data['image${i + 1}'] = null;
+                      if (newImages[i] != null)
+                        widget.data['image${i + 1}'] = newImages[i]!.path;
+                      else if (existing[i] == null)
+                        widget.data['image${i + 1}'] = null;
                     }
                   });
                   Navigator.pop(context);
                 } else {
                   final body = await streamed.stream.bytesToString();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error ${streamed.statusCode}: $body')),
+                    SnackBar(
+                      content: Text('Error ${streamed.statusCode}: $body'),
+                    ),
                   );
                 }
               },
@@ -926,6 +1116,7 @@ Téléphone : 71 434 880
                 );
                 addToHistory({
                   'reference': widget.data['reference'],
+                  'name': widget.data['name'],
                   'takenBy': nameCtrl.text.trim(),
                   'quantity': take,
                   'date': now,

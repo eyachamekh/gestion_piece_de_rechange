@@ -11,8 +11,9 @@ import 'package:permission_handler/permission_handler.dart';
 
 class ScanPage extends StatefulWidget {
   final String token;
+  final String role;
 
-  const ScanPage({required this.token, super.key});
+  const ScanPage({required this.token, this.role = 'user', super.key});
 
   @override
   State<ScanPage> createState() => _ScanPageState();
@@ -96,7 +97,9 @@ class _ScanPageState extends State<ScanPage> {
       });
       Navigator.push(
         context,
-        createRoute(LoadingPage(image: file, token: widget.token)),
+        createRoute(
+          LoadingPage(image: file, token: widget.token, role: widget.role),
+        ),
       );
     } on PlatformException catch (e) {
       if (!mounted) return;
@@ -115,76 +118,76 @@ class _ScanPageState extends State<ScanPage> {
         children: [
           Column(
             children: [
-          const STBGHeader(
-            title: 'Scan a Part',
-            subtitle: 'Identify a spare part using your camera or gallery',
-            showBack: true,
-          ),
-          const SizedBox(height: 32),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  if (_selectedImageFile != null)
-                    Center(
-                      child: SizedBox(
-                        width: 240,
-                        height: 160,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.file(
-                            _selectedImageFile!,
-                            fit: BoxFit.cover,
+              const STBGHeader(
+                title: 'Scan a Part',
+                subtitle: 'Identify a spare part using your camera or gallery',
+                showBack: true,
+              ),
+              const SizedBox(height: 32),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 8),
+                      if (_selectedImageFile != null)
+                        Center(
+                          child: SizedBox(
                             width: 240,
                             height: 160,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.file(
+                                _selectedImageFile!,
+                                fit: BoxFit.cover,
+                                width: 240,
+                                height: 160,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        Container(
+                          width: 130,
+                          height: 130,
+                          decoration: BoxDecoration(
+                            gradient: RadialGradient(
+                              colors: [
+                                STBG.steel.withAlpha((0.15 * 255).round()),
+                                STBG.steel.withAlpha((0.03 * 255).round()),
+                              ],
+                            ),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: STBG.steel.withAlpha((0.2 * 255).round()),
+                              width: 2,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.document_scanner_rounded,
+                            size: 58,
+                            color: STBG.steel.withAlpha((0.7 * 255).round()),
                           ),
                         ),
+                      const SizedBox(height: 24),
+                      ScanOption(
+                        icon: Icons.camera_alt_rounded,
+                        title: 'Take a Photo',
+                        subtitle: 'Use your camera to capture the part',
+                        onTap: () => pickImage(ImageSource.camera),
                       ),
-                    )
-                  else
-                    Container(
-                      width: 130,
-                      height: 130,
-                      decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          colors: [
-                            STBG.steel.withAlpha((0.15 * 255).round()),
-                            STBG.steel.withAlpha((0.03 * 255).round()),
-                          ],
-                        ),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: STBG.steel.withAlpha((0.2 * 255).round()),
-                          width: 2,
-                        ),
+                      const SizedBox(height: 14),
+                      ScanOption(
+                        icon: Icons.photo_library_rounded,
+                        title: 'Choose from Gallery',
+                        subtitle: 'Select an existing photo',
+                        onTap: () => pickImage(ImageSource.gallery),
                       ),
-                      child: Icon(
-                        Icons.document_scanner_rounded,
-                        size: 58,
-                        color: STBG.steel.withAlpha((0.7 * 255).round()),
-                      ),
-                    ),
-                  const SizedBox(height: 24),
-                  ScanOption(
-                    icon: Icons.camera_alt_rounded,
-                    title: 'Take a Photo',
-                    subtitle: 'Use your camera to capture the part',
-                    onTap: () => pickImage(ImageSource.camera),
+                      const SizedBox(height: 80),
+                    ],
                   ),
-                  const SizedBox(height: 14),
-                  ScanOption(
-                    icon: Icons.photo_library_rounded,
-                    title: 'Choose from Gallery',
-                    subtitle: 'Select an existing photo',
-                    onTap: () => pickImage(ImageSource.gallery),
-                  ),
-                  const SizedBox(height: 80),
-                ],
+                ),
               ),
-            ),
-          ),
             ],
           ),
           Positioned(
@@ -194,6 +197,7 @@ class _ScanPageState extends State<ScanPage> {
             child: CustomBottomNavigationBar(
               currentIndex: 1,
               token: widget.token,
+              role: widget.role,
             ),
           ),
         ],

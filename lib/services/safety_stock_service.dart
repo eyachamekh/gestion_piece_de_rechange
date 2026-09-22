@@ -17,11 +17,38 @@ class SafetyStockService {
           await rootBundle.load('assets/data/délaidetraiementDA.xlsx');
       final xl.Excel excel = xl.Excel.decodeBytes(data.buffer.asUint8List());
 
-      final sheet = excel.sheets.values.first;
-      final rows = sheet.rows;
+      xl.Sheet? delaySheet;
+      int headerIndex = -1;
+      for (final sheet in excel.sheets.values) {
+        final rows = sheet.rows;
+        for (int i = 0; i < rows.length; i++) {
+          final row = rows[i];
+          final first =
+              row.isNotEmpty
+                  ? row[0]?.value.toString().toLowerCase() ?? ''
+                  : '';
+          final second =
+              row.length > 1
+                  ? row[1]?.value.toString().toLowerCase() ?? ''
+                  : '';
+          if ((first.contains('étiquette') || first.contains('etiquette')) &&
+              (second.contains('moyenne') || second.contains('délai') ||
+                  second.contains('delai'))) {
+            delaySheet = sheet;
+            headerIndex = i;
+            break;
+          }
+        }
+        if (delaySheet != null) break;
+      }
 
-      // Ignorer la première ligne (en-tête)
-      for (int i = 1; i < rows.length; i++) {
+      if (delaySheet == null) {
+        throw StateError('No reference/delay worksheet found');
+      }
+
+      final rows = delaySheet.rows;
+
+      for (int i = headerIndex + 1; i < rows.length; i++) {
         final row = rows[i];
         if (row.isEmpty) continue;
 
@@ -42,7 +69,7 @@ class SafetyStockService {
         }
 
         if (label.isNotEmpty && delai != null && delai > 0) {
-          _delais[label.toLowerCase()] = delai;
+          _delais[_normalizeReference(label)] = delai;
         }
       }
     } catch (_) {
@@ -55,7 +82,7 @@ class SafetyStockService {
   // Cherche d'abord une correspondance exacte, puis partielle.
   // Si aucune correspondance, retourne [defaultDelai].
   static double getDelai(String reference, {double defaultDelai = 30.0}) {
-    final key = reference.trim().toLowerCase();
+    final key = _normalizeReference(reference);
     if (_delais.containsKey(key)) return _delais[key]!;
     for (final entry in _delais.entries) {
       if (key.contains(entry.key) || entry.key.contains(key)) {
@@ -63,6 +90,10 @@ class SafetyStockService {
       }
     }
     return defaultDelai;
+  }
+
+  static String _normalizeReference(String value) {
+    return value.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
   }
 
   // Calcule le stock de sécurité pour une liste de pièces.
@@ -77,7 +108,7 @@ class SafetyStockService {
     // Consommation totale par référence
     final Map<String, int> totalConsumed = {};
     for (final a in activities) {
-      final ref = (a['reference'] ?? '').toString().trim().toLowerCase();
+      final ref = _normalizeReference((a['reference'] ?? '').toString());
       final qty = a['quantity'] is int
           ? a['quantity'] as int
           : int.tryParse(a['quantity'].toString()) ?? 0;
@@ -90,7 +121,7 @@ class SafetyStockService {
           ? part['quantity'] as int
           : int.tryParse(part['quantity'].toString()) ?? 0;
 
-      final consumed = totalConsumed[ref.toLowerCase()] ?? 0;
+      final consumed = totalConsumed[_normalizeReference(ref)] ?? 0;
       final double consommationJour =
           periodDays > 0 ? consumed / periodDays : 0;
       final double delai = getDelai(ref);

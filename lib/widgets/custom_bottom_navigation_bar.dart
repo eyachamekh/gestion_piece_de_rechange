@@ -3,15 +3,16 @@ import 'package:gestion_piece_de_rechange/screens/history_page.dart';
 import 'package:gestion_piece_de_rechange/screens/list_page.dart';
 import 'package:gestion_piece_de_rechange/screens/scan_page.dart';
 import 'package:gestion_piece_de_rechange/utils/app_utils.dart';
-import 'package:gestion_piece_de_rechange/widgets/shared_widgets.dart';
 
 class CustomBottomNavigationBar extends StatelessWidget {
   final int currentIndex;
   final String? token;
+  final String role;
 
   const CustomBottomNavigationBar({
     required this.currentIndex,
     this.token,
+    this.role = 'user',
     super.key,
   });
 
@@ -20,11 +21,12 @@ class CustomBottomNavigationBar extends StatelessWidget {
     final Widget page;
     switch (index) {
       case 0:
-        page = ListPage(token: token!);
+        page = ListPage(token: token!, role: role);
       case 1:
-        page = ScanPage(token: token!);
+        page = ScanPage(token: token!, role: role);
       case 2:
-        page = HistoryPage(history: appHistory, token: token!);
+        if (role.trim().toLowerCase() != 'admin') return;
+        page = HistoryPage(history: appHistory, token: token!, role: role);
       default:
         return;
     }
@@ -33,11 +35,17 @@ class CustomBottomNavigationBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [
-      (Icons.inventory_2_outlined, 'Inventaire'),
-      (Icons.document_scanner_outlined, 'Scanner'),
-      (Icons.history_outlined, 'Historique'),
-    ];
+    final isAdmin = role.trim().toLowerCase() == 'admin';
+    final items = isAdmin
+        ? [
+            (Icons.inventory_2_outlined, 'Inventaire'),
+            (Icons.document_scanner_outlined, 'Scanner'),
+            (Icons.history_outlined, 'Historique'),
+          ]
+        : [
+            (Icons.inventory_2_outlined, 'Inventaire'),
+            (Icons.document_scanner_outlined, 'Scanner'),
+          ];
 
     return SafeArea(
       minimum: const EdgeInsets.fromLTRB(12, 0, 12, 14),
@@ -71,7 +79,9 @@ class CustomBottomNavigationBar extends StatelessWidget {
                     child: _NavigationItem(
                       icon: items[index].$1,
                       label: items[index].$2,
-                      selected: currentIndex == index,
+                      selected: isAdmin
+                          ? currentIndex == index
+                          : currentIndex == (index == 0 ? 0 : 1),
                       onTap: () => _navigate(context, index),
                     ),
                   ),

@@ -17,8 +17,14 @@ import 'package:gestion_piece_de_rechange/config/api_config.dart';
 class LoadingPage extends StatefulWidget {
   final File? image;
   final String token;
+  final String role;
 
-  const LoadingPage({this.image, required this.token, super.key});
+  const LoadingPage({
+    this.image,
+    required this.token,
+    this.role = 'user',
+    super.key,
+  });
 
   @override
   State<LoadingPage> createState() => _LoadingPageState();
@@ -179,7 +185,13 @@ class _LoadingPageState extends State<LoadingPage>
         foundExact['ocrText'] = ocrText;
         Navigator.pushReplacement(
           context,
-          createRoute(ResultPage(data: foundExact, token: widget.token)),
+          createRoute(
+            ResultPage(
+              data: foundExact,
+              token: widget.token,
+              role: widget.role,
+            ),
+          ),
         );
         return;
       }
@@ -213,7 +225,10 @@ class _LoadingPageState extends State<LoadingPage>
           try {
             final List<dynamic> decoded = jsonDecode(embJson as String);
             final dbEmb = decoded.map((e) => (e as num).toDouble()).toList();
-            final score = ImageClassifierService.cosineSimilarity(embedding, dbEmb);
+            final score = ImageClassifierService.cosineSimilarity(
+              embedding,
+              dbEmb,
+            );
             if (score > bestScore) bestScore = score;
           } catch (_) {}
         }
@@ -243,7 +258,9 @@ class _LoadingPageState extends State<LoadingPage>
         });
       }
       combined.addAll(dbMatches);
-      combined.sort((a, b) => (b['score'] as double).compareTo(a['score'] as double));
+      combined.sort(
+        (a, b) => (b['score'] as double).compareTo(a['score'] as double),
+      );
       debugPrint(
         'Visual gallery candidates above '
         '${minimumDisplayedSimilarity * 100}%: ${combined.length}',
@@ -291,7 +308,9 @@ class _LoadingPageState extends State<LoadingPage>
       _finished = true;
       Navigator.pushReplacement(
         context,
-        createRoute(ResultPage(data: data, token: widget.token)),
+        createRoute(
+          ResultPage(data: data, token: widget.token, role: widget.role),
+        ),
       );
     } on TimeoutException {
       if (!mounted) return;
@@ -456,7 +475,11 @@ class _LoadingPageState extends State<LoadingPage>
                           sel['confidence'] = 0.0;
                           Navigator.of(ctx).push(
                             createRoute(
-                              ResultPage(data: sel, token: widget.token),
+                              ResultPage(
+                                data: sel,
+                                token: widget.token,
+                                role: widget.role,
+                              ),
                             ),
                           );
                         },
@@ -572,7 +595,9 @@ class _LoadingPageState extends State<LoadingPage>
                           p['reference'] ?? '-',
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
-                        subtitle: TranslatedText('${sc.toStringAsFixed(1)}% similarity'),
+                        subtitle: TranslatedText(
+                          '${sc.toStringAsFixed(1)}% similarity',
+                        ),
                         onTap: () {
                           final selected = Map<String, dynamic>.from(p);
                           selected['confidence'] = m['score'];
@@ -583,7 +608,11 @@ class _LoadingPageState extends State<LoadingPage>
                           // Push details on top of the sheet so Back returns to the same similarity list
                           Navigator.of(ctx).push(
                             createRoute(
-                              ResultPage(data: selected, token: widget.token),
+                              ResultPage(
+                                data: selected,
+                                token: widget.token,
+                                role: widget.role,
+                              ),
                             ),
                           );
                         },

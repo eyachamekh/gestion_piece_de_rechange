@@ -25,8 +25,9 @@ import 'package:gestion_piece_de_rechange/widgets/custom_bottom_navigation_bar.d
 
 class ListPage extends StatefulWidget {
   final String token;
+  final String role;
 
-  const ListPage({required this.token, super.key});
+  const ListPage({required this.token, this.role = 'admin', super.key});
 
   @override
   State<ListPage> createState() => _ListPageState();
@@ -400,7 +401,9 @@ class _ListPageState extends State<ListPage> {
                 } else {
                   final body = await streamed.stream.bytesToString();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error ${streamed.statusCode}: $body')),
+                    SnackBar(
+                      content: Text('Error ${streamed.statusCode}: $body'),
+                    ),
                   );
                 }
               },
@@ -419,7 +422,9 @@ class _ListPageState extends State<ListPage> {
     final rotated = img.copyRotate(decoded, angle: 90);
     final outBytes = img.encodeJpg(rotated);
     final tmp = await getTemporaryDirectory();
-    final newFile = File('${tmp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    final newFile = File(
+      '${tmp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
     await newFile.writeAsBytes(outBytes);
     return newFile;
   }
@@ -431,7 +436,9 @@ class _ListPageState extends State<ListPage> {
     final rotated = img.copyRotate(decoded, angle: 90);
     final outBytes = img.encodeJpg(rotated);
     final tmp = await getTemporaryDirectory();
-    final file = File('${tmp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    final file = File(
+      '${tmp.path}/${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
     await file.writeAsBytes(outBytes);
     return file;
   }
@@ -441,7 +448,9 @@ class _ListPageState extends State<ListPage> {
     final locCtrl = TextEditingController(text: item['location'] ?? '');
     final qtyCtrl = TextEditingController(text: item['quantity'].toString());
     final nameCtrl = TextEditingController(text: item['name'] ?? '');
-    final fournCtrl = TextEditingController(text: item['fournisseur_reference'] ?? '');
+    final fournCtrl = TextEditingController(
+      text: item['fournisseur_reference'] ?? '',
+    );
     // existing[i] = server filename, null means slot is empty or replaced
     final List<String?> existing = List.generate(
       7,
@@ -553,7 +562,9 @@ class _ListPageState extends State<ListPage> {
                           onTap: () async {
                             final source = await pickSource();
                             if (source == null) return;
-                            final picked = await picker.pickImage(source: source);
+                            final picked = await picker.pickImage(
+                              source: source,
+                            );
                             if (picked != null) {
                               setD(() {
                                 newImages[i] = picked;
@@ -572,19 +583,23 @@ class _ListPageState extends State<ListPage> {
                                   ),
                                   image: newImages[i] != null
                                       ? DecorationImage(
-                                          image: FileImage(File(newImages[i]!.path)),
+                                          image: FileImage(
+                                            File(newImages[i]!.path),
+                                          ),
                                           fit: BoxFit.cover,
                                         )
                                       : existing[i] != null
-                                          ? DecorationImage(
-                                              image: NetworkImage(
-                                                ApiConfig.uploadUrl(existing[i]!),
-                                              ),
-                                              fit: BoxFit.cover,
-                                            )
-                                          : null,
+                                      ? DecorationImage(
+                                          image: NetworkImage(
+                                            ApiConfig.uploadUrl(existing[i]!),
+                                          ),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
                                 ),
-                                child: (newImages[i] == null && existing[i] == null)
+                                child:
+                                    (newImages[i] == null &&
+                                        existing[i] == null)
                                     ? const Center(
                                         child: Icon(
                                           Icons.add_a_photo_outlined,
@@ -627,14 +642,22 @@ class _ListPageState extends State<ListPage> {
                                     onTap: () async {
                                       try {
                                         if (newImages[i] != null) {
-                                          final rotated = await _rotateImageFile(
-                                            File(newImages[i]!.path),
+                                          final rotated =
+                                              await _rotateImageFile(
+                                                File(newImages[i]!.path),
+                                              );
+                                          setD(
+                                            () => newImages[i] = XFile(
+                                              rotated.path,
+                                            ),
                                           );
-                                          setD(() => newImages[i] = XFile(rotated.path));
                                         } else if (existing[i] != null) {
-                                          final rotated = await _rotateNetworkImage(
-                                            ApiConfig.uploadUrl(existing[i]!),
-                                          );
+                                          final rotated =
+                                              await _rotateNetworkImage(
+                                                ApiConfig.uploadUrl(
+                                                  existing[i]!,
+                                                ),
+                                              );
                                           setD(() {
                                             newImages[i] = XFile(rotated.path);
                                             existing[i] = null;
@@ -680,6 +703,11 @@ class _ListPageState extends State<ListPage> {
                 ),
               ),
               onPressed: () async {
+                final previousQuantity =
+                    int.tryParse(item['quantity'].toString()) ?? 0;
+                final updatedQuantity = int.tryParse(qtyCtrl.text.trim());
+                if (updatedQuantity == null || updatedQuantity < 0) return;
+
                 final uri = Uri.parse(
                   ApiConfig.url('/api/parts/${item['id']}'),
                 );
@@ -687,7 +715,7 @@ class _ListPageState extends State<ListPage> {
                   ..headers['Authorization'] = 'Bearer ${widget.token}'
                   ..fields['reference'] = refCtrl.text
                   ..fields['location'] = locCtrl.text
-                  ..fields['quantity'] = qtyCtrl.text
+                  ..fields['quantity'] = updatedQuantity.toString()
                   ..fields['name'] = nameCtrl.text
                   ..fields['fournisseur_reference'] = fournCtrl.text;
                 for (int i = 0; i < 7; i++) {
@@ -715,12 +743,30 @@ class _ListPageState extends State<ListPage> {
                 final streamed = await req.send();
                 if (!mounted) return;
                 if (streamed.statusCode == 200 || streamed.statusCode == 201) {
+                  if (updatedQuantity != previousQuantity) {
+                    final now = formatLocalDateTimeForApi(DateTime.now());
+                    addToHistory({
+                      'reference': refCtrl.text,
+                      'name': nameCtrl.text,
+                      'takenBy': 'Admin',
+                      'quantity': (updatedQuantity - previousQuantity).abs(),
+                      'previousQuantity': previousQuantity,
+                      'newQuantity': updatedQuantity,
+                      'action': updatedQuantity > previousQuantity
+                          ? 'added'
+                          : 'reduced',
+                      'date': now,
+                    });
+                    await saveHistory();
+                  }
                   Navigator.pop(context);
                   loadParts();
                 } else {
                   final body = await streamed.stream.bytesToString();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error ${streamed.statusCode}: $body')),
+                    SnackBar(
+                      content: Text('Error ${streamed.statusCode}: $body'),
+                    ),
                   );
                 }
               },
@@ -810,6 +856,7 @@ class _ListPageState extends State<ListPage> {
                 );
                 addToHistory({
                   'reference': item['reference'],
+                  'name': item['name'],
                   'takenBy': nameCtrl.text.trim(),
                   'quantity': take,
                   'date': now,
@@ -1311,591 +1358,677 @@ class _ListPageState extends State<ListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = widget.role == 'admin';
     return Scaffold(
       backgroundColor: STBG.surface,
       body: Stack(
         children: [
           Column(
             children: [
-          Container(
-            decoration: const BoxDecoration(
-              gradient: STBG.headerGradient,
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0x35000000),
-                  blurRadius: 20,
-                  offset: Offset(0, 6),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.fromLTRB(16, 32, 16, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GestureDetector(
-                  onTap: () => Navigator.pop(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.arrow_back_ios_new,
-                      color: Colors.white,
-                      size: 14,
-                    ),
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: STBG.headerGradient,
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(28),
                   ),
-                ),
-                const SizedBox(height: 8),
-                const TranslatedText(
-                  'Spare Parts',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                TranslatedText(
-                  'Inventory management',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.6),
-                    fontSize: 12,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: ValueListenableBuilder<String>(
-                          valueListenable: langNotifier,
-                          builder: (_, lang, __) => ValueListenableBuilder<int>(
-                            valueListenable:
-                                MLKitTranslationService.instance.translationVersion,
-                            builder: (_, __, ___) => TextField(
-                              decoration: InputDecoration(
-                                hintText: t('Search parts...'),
-                                hintStyle: TextStyle(
-                                  color: Colors.grey[400],
-                                  fontSize: 14,
-                                ),
-                                prefixIcon: Icon(
-                                  Icons.search_rounded,
-                                  color: Colors.grey[400],
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                              ),
-                              onChanged: (v) => setState(() {
-                                filteredList = allParts
-                                    .where(
-                                      (item) {
-                                        final q = v.toLowerCase();
-                                        return (item['reference'] ?? '').toString().toLowerCase().contains(q)
-                                            || (item['fournisseur_reference'] ?? '').toString().toLowerCase().contains(q)
-                                            || (item['name'] ?? '').toString().toLowerCase().contains(q);
-                                      },
-                                    )
-                                    .toList();
-                                _currentPage = 0;
-                              }),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    HeaderIconBtn(
-                      icon: Icons.download_rounded,
-                      onTap: () => _showExportSheet(context),
-                    ),
-                    const SizedBox(width: 8),
-                    HeaderIconBtn(
-                      icon: Icons.add_rounded,
-                      onTap: _showAddDialog,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Color(0x35000000),
+                      blurRadius: 20,
+                      offset: Offset(0, 6),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: loading
-                ? const Center(
-                    child: CircularProgressIndicator(color: STBG.steel),
-                  )
-                : Column(
-                    children: [
-                      if (_orderAlerts.isNotEmpty && !_bannerDismissed)
-                        OrderAlertBanner(
-                          alerts: _orderAlerts,
-                          onDismiss: () =>
-                              setState(() => _bannerDismissed = true),
-                          onTapAlert: (alert) {
-                            final part = allParts.firstWhere(
-                              (p) => (p['reference'] ?? '').toString().toLowerCase() == alert.reference.toLowerCase(),
-                              orElse: () => null,
-                            );
-                            if (part != null) {
-                              Navigator.push(context, createRoute(ResultPage(data: part, token: widget.token)));
-                            }
-                          },
+                padding: const EdgeInsets.fromLTRB(16, 32, 16, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      Expanded(
-                        child: filteredList.isEmpty
-                            ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.search_off_rounded,
-                                      size: 56,
-                                      color: Colors.grey[300],
-                                    ),
-                                    const SizedBox(height: 10),
-                                    const TranslatedText(
-                                      'No parts found',
-                                      style: TextStyle(
-                                        color: STBG.textSecondary,
-                                        fontSize: 15,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : ListView.builder(
-                                padding: const EdgeInsets.fromLTRB(
-                                  16,
-                                  16,
-                                  16,
-                                  80,
-                                ),
-                                itemCount:
-                                    _pageItems.length +
-                                    (filteredList.isNotEmpty && _pageCount > 1
-                                        ? 1
-                                        : 0),
-                                itemBuilder: (ctx, i) {
-                                  if (i == _pageItems.length) {
-                                    return Padding(
-                                      padding: const EdgeInsets.fromLTRB(
-                                        16,
-                                        4,
-                                        16,
-                                        12,
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          IconButton(
-                                            tooltip: 'Previous page',
-                                            onPressed: _currentPage == 0
-                                                ? null
-                                                : () => setState(
-                                                    () => _currentPage--,
-                                                  ),
-                                            icon: const Icon(
-                                              Icons.chevron_left_rounded,
+                        child: const Icon(
+                          Icons.arrow_back_ios_new,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const TranslatedText(
+                      'Spare Parts',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    TranslatedText(
+                      'Inventory management',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.6),
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ValueListenableBuilder<String>(
+                              valueListenable: langNotifier,
+                              builder: (_, lang, __) =>
+                                  ValueListenableBuilder<int>(
+                                    valueListenable: MLKitTranslationService
+                                        .instance
+                                        .translationVersion,
+                                    builder: (_, __, ___) => TextField(
+                                      decoration: InputDecoration(
+                                        hintText: t('Search parts...'),
+                                        hintStyle: TextStyle(
+                                          color: Colors.grey[400],
+                                          fontSize: 14,
+                                        ),
+                                        prefixIcon: Icon(
+                                          Icons.search_rounded,
+                                          color: Colors.grey[400],
+                                        ),
+                                        border: InputBorder.none,
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              vertical: 14,
                                             ),
-                                          ),
-                                          Text(
-                                            '${_currentPage + 1} / $_pageCount',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              color: STBG.textPrimary,
-                                            ),
-                                          ),
-                                          IconButton(
-                                            tooltip: 'Next page',
-                                            onPressed:
-                                                _currentPage >= _pageCount - 1
-                                                ? null
-                                                : () => setState(
-                                                    () => _currentPage++,
-                                                  ),
-                                            icon: const Icon(
-                                              Icons.chevron_right_rounded,
-                                            ),
-                                          ),
-                                            ],
                                       ),
-                                    );
-                                  }
-                                  final item = _pageItems[i];
-                                  final int qty = item['quantity'] ?? 0;
-                                  final bool low = qty <= 5;
-                                  SafetyStockResult? alert;
-                                  for (final a in _orderAlerts) {
-                                    if (a.reference.toLowerCase() ==
-                                        (item['reference'] ?? '')
-                                            .toString()
-                                            .toLowerCase()) {
-                                      alert = a;
-                                      break;
-                                    }
-                                  }
-                                  return Dismissible(
-                                    key: Key(item['id'].toString()),
-                                    direction: DismissDirection.endToStart,
-                                    background: Container(
-                                      alignment: Alignment.centerRight,
-                                      padding: const EdgeInsets.only(right: 20),
-                                      margin: const EdgeInsets.only(bottom: 12),
-                                      decoration: BoxDecoration(
-                                        color: STBG.danger,
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      child: const Icon(
-                                        Icons.delete_rounded,
-                                        color: Colors.white,
+                                      onChanged: (v) => setState(() {
+                                        filteredList = allParts.where((item) {
+                                          final q = v.toLowerCase();
+                                          return (item['reference'] ?? '')
+                                                  .toString()
+                                                  .toLowerCase()
+                                                  .contains(q) ||
+                                              (item['fournisseur_reference'] ??
+                                                      '')
+                                                  .toString()
+                                                  .toLowerCase()
+                                                  .contains(q) ||
+                                              (item['name'] ?? '')
+                                                  .toString()
+                                                  .toLowerCase()
+                                                  .contains(q);
+                                        }).toList();
+                                        _currentPage = 0;
+                                      }),
+                                    ),
+                                  ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (isAdmin) ...[
+                          HeaderIconBtn(
+                            icon: Icons.download_rounded,
+                            onTap: () => _showExportSheet(context),
+                          ),
+                          const SizedBox(width: 8),
+                          HeaderIconBtn(
+                            icon: Icons.add_rounded,
+                            onTap: _showAddDialog,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: loading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: STBG.steel),
+                      )
+                    : Column(
+                        children: [
+                          if (isAdmin &&
+                              _orderAlerts.isNotEmpty &&
+                              !_bannerDismissed)
+                            OrderAlertBanner(
+                              alerts: _orderAlerts,
+                              onDismiss: () =>
+                                  setState(() => _bannerDismissed = true),
+                              onTapAlert: (alert) {
+                                final part = allParts.firstWhere(
+                                  (p) =>
+                                      (p['reference'] ?? '')
+                                          .toString()
+                                          .toLowerCase() ==
+                                      alert.reference.toLowerCase(),
+                                  orElse: () => null,
+                                );
+                                if (part != null) {
+                                  Navigator.push(
+                                    context,
+                                    createRoute(
+                                      ResultPage(
+                                        data: part,
+                                        token: widget.token,
+                                        role: widget.role,
                                       ),
                                     ),
-                                    onDismissed: (_) => _deletePart(item['id']),
-                                    child: InkWell(
-                                      onTap: () => Navigator.push(
-                                        ctx,
-                                        createRoute(
-                                          ResultPage(
-                                            data: item,
-                                            token: widget.token,
+                                  );
+                                }
+                              },
+                            ),
+                          Expanded(
+                            child: filteredList.isEmpty
+                                ? Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.search_off_rounded,
+                                          size: 56,
+                                          color: Colors.grey[300],
+                                        ),
+                                        const SizedBox(height: 10),
+                                        const TranslatedText(
+                                          'No parts found',
+                                          style: TextStyle(
+                                            color: STBG.textSecondary,
+                                            fontSize: 15,
                                           ),
                                         ),
-                                      ),
-                                      child: Container(
-                                        margin: const EdgeInsets.only(
-                                          bottom: 12,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.circular(
+                                      ],
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      16,
+                                      16,
+                                      80,
+                                    ),
+                                    itemCount:
+                                        _pageItems.length +
+                                        (filteredList.isNotEmpty &&
+                                                _pageCount > 1
+                                            ? 1
+                                            : 0),
+                                    itemBuilder: (ctx, i) {
+                                      if (i == _pageItems.length) {
+                                        return Padding(
+                                          padding: const EdgeInsets.fromLTRB(
                                             16,
+                                            4,
+                                            16,
+                                            12,
                                           ),
-                                          border: alert != null
-                                              ? Border.all(
-                                                  color: STBG.gold.withOpacity(
-                                                    0.5,
-                                                  ),
-                                                  width: 1.5,
-                                                )
-                                              : low
-                                              ? Border.all(
-                                                  color: STBG.danger
-                                                      .withOpacity(0.25),
-                                                )
-                                              : null,
-                                          boxShadow: const [
-                                            BoxShadow(
-                                              color: Color(0x0D000000),
-                                              blurRadius: 8,
-                                              offset: Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Column(
-                                          children: [
-                                            if (item['image1'] == null &&
-                                                item['image2'] == null &&
-                                                item['image3'] == null)
-                                              GestureDetector(
-                                                onTap: () =>
-                                                    _showEditDialog(item),
-                                                child: Container(
-                                                  width: double.infinity,
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 14,
-                                                        vertical: 7,
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                            children: [
+                                              IconButton(
+                                                tooltip: 'Previous page',
+                                                onPressed: _currentPage == 0
+                                                    ? null
+                                                    : () => setState(
+                                                        () => _currentPage--,
                                                       ),
-                                                  decoration: BoxDecoration(
-                                                    color: STBG.danger
-                                                        .withOpacity(0.08),
-                                                    borderRadius:
-                                                        const BorderRadius.vertical(
-                                                          top: Radius.circular(
-                                                            16,
+                                                icon: const Icon(
+                                                  Icons.chevron_left_rounded,
+                                                ),
+                                              ),
+                                              Text(
+                                                '${_currentPage + 1} / $_pageCount',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: STBG.textPrimary,
+                                                ),
+                                              ),
+                                              IconButton(
+                                                tooltip: 'Next page',
+                                                onPressed:
+                                                    _currentPage >=
+                                                        _pageCount - 1
+                                                    ? null
+                                                    : () => setState(
+                                                        () => _currentPage++,
+                                                      ),
+                                                icon: const Icon(
+                                                  Icons.chevron_right_rounded,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }
+                                      final item = _pageItems[i];
+                                      final int qty = item['quantity'] ?? 0;
+                                      final bool low = qty <= 5;
+                                      SafetyStockResult? alert;
+                                      for (final a in _orderAlerts) {
+                                        if (a.reference.toLowerCase() ==
+                                            (item['reference'] ?? '')
+                                                .toString()
+                                                .toLowerCase()) {
+                                          alert = a;
+                                          break;
+                                        }
+                                      }
+                                      return Dismissible(
+                                        key: Key(item['id'].toString()),
+                                        direction: isAdmin
+                                            ? DismissDirection.endToStart
+                                            : DismissDirection.none,
+                                        background: Container(
+                                          alignment: Alignment.centerRight,
+                                          padding: const EdgeInsets.only(
+                                            right: 20,
+                                          ),
+                                          margin: const EdgeInsets.only(
+                                            bottom: 12,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: STBG.danger,
+                                            borderRadius: BorderRadius.circular(
+                                              16,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.delete_rounded,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        onDismissed: isAdmin
+                                            ? (_) => _deletePart(item['id'])
+                                            : null,
+                                        child: InkWell(
+                                          onTap: () => Navigator.push(
+                                            ctx,
+                                            createRoute(
+                                              ResultPage(
+                                                data: item,
+                                                token: widget.token,
+                                                role: widget.role,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Container(
+                                            margin: const EdgeInsets.only(
+                                              bottom: 12,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              border: !isAdmin
+                                                  ? null
+                                                  : alert != null
+                                                  ? Border.all(
+                                                      color: STBG.gold
+                                                          .withOpacity(0.5),
+                                                      width: 1.5,
+                                                    )
+                                                  : low
+                                                  ? Border.all(
+                                                      color: STBG.danger
+                                                          .withOpacity(0.25),
+                                                    )
+                                                  : null,
+                                              boxShadow: const [
+                                                BoxShadow(
+                                                  color: Color(0x0D000000),
+                                                  blurRadius: 8,
+                                                  offset: Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Column(
+                                              children: [
+                                                if (isAdmin &&
+                                                    item['image1'] == null &&
+                                                    item['image2'] == null &&
+                                                    item['image3'] == null)
+                                                  GestureDetector(
+                                                    onTap: () =>
+                                                        _showEditDialog(item),
+                                                    child: Container(
+                                                      width: double.infinity,
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 14,
+                                                            vertical: 7,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: STBG.danger
+                                                            .withOpacity(0.08),
+                                                        borderRadius:
+                                                            const BorderRadius.vertical(
+                                                              top:
+                                                                  Radius.circular(
+                                                                    16,
+                                                                  ),
+                                                            ),
+                                                        border: Border(
+                                                          bottom: BorderSide(
+                                                            color: STBG.danger
+                                                                .withOpacity(
+                                                                  0.15,
+                                                                ),
                                                           ),
                                                         ),
-                                                    border: Border(
-                                                      bottom: BorderSide(
-                                                        color: STBG.danger
-                                                            .withOpacity(0.15),
+                                                      ),
+                                                      child: Row(
+                                                        children: [
+                                                          Icon(
+                                                            Icons
+                                                                .image_not_supported_outlined,
+                                                            size: 13,
+                                                            color: STBG.danger,
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 6,
+                                                          ),
+                                                          Expanded(
+                                                            child: TranslatedText(
+                                                              'No photo — Tap to add',
+                                                              style: TextStyle(
+                                                                fontSize: 11,
+                                                                color:
+                                                                    STBG.danger,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          Icon(
+                                                            Icons
+                                                                .add_photo_alternate_outlined,
+                                                            size: 14,
+                                                            color: STBG.danger,
+                                                          ),
+                                                        ],
                                                       ),
                                                     ),
                                                   ),
-                                                  child: Row(
-                                                    children: [
-                                                      Icon(
-                                                        Icons
-                                                            .image_not_supported_outlined,
-                                                        size: 13,
-                                                        color: STBG.danger,
-                                                      ),
-                                                      const SizedBox(width: 6),
-                                                      Expanded(
-                                                        child: TranslatedText(
-                                                          'No photo — Tap to add',
-                                                          style: TextStyle(
-                                                            fontSize: 11,
-                                                            color: STBG.danger,
-                                                            fontWeight:
-                                                                FontWeight.w600,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      Icon(
-                                                        Icons
-                                                            .add_photo_alternate_outlined,
-                                                        size: 14,
-                                                        color: STBG.danger,
-                                                      ),
-                                                    ],
+                                                Padding(
+                                                  padding: const EdgeInsets.all(
+                                                    16,
                                                   ),
-                                                ),
-                                              ),
-                                            Padding(
-                                              padding: const EdgeInsets.all(16),
-                                              child: Column(
-                                                children: [
-                                                  Row(
+                                                  child: Column(
                                                     children: [
-                                                      Container(
-                                                        width: 56,
-                                                        height: 56,
-                                                        decoration: BoxDecoration(
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                11,
-                                                              ),
-                                                          color:
-                                                              Colors.grey[200],
-                                                        ),
-                                                        child: Builder(
-                                                          builder: (ctxImg) {
-                                                            final img =
-                                                                (item['image1'] ??
-                                                                item['image2'] ??
-                                                                item['image3']);
-                                                            if (img != null) {
-                                                              final heroTag =
-                                                                  'part-${item['id']}-img-0';
-                                                              return Hero(
-                                                                tag: heroTag,
-                                                                child: ClipRRect(
+                                                      Row(
+                                                        children: [
+                                                          Container(
+                                                            width: 56,
+                                                            height: 56,
+                                                            decoration:
+                                                                BoxDecoration(
                                                                   borderRadius:
                                                                       BorderRadius.circular(
                                                                         11,
                                                                       ),
-                                                                  child: Image.network(
-                                                                    ApiConfig.uploadUrl(
-                                                                      img.toString(),
-                                                                    ),
-                                                                    fit: BoxFit
-                                                                        .cover,
-                                                                    errorBuilder:
-                                                                        (
-                                                                          c,
-                                                                          e,
-                                                                          s,
-                                                                        ) => const Icon(
-                                                                          Icons
-                                                                              .broken_image,
-                                                                          color:
-                                                                              Colors.grey,
-                                                                        ),
-                                                                  ),
+                                                                  color: Colors
+                                                                      .grey[200],
                                                                 ),
-                                                              );
-                                                            }
-                                                            return Container(
-                                                              padding:
-                                                                  const EdgeInsets.all(
-                                                                    10,
-                                                                  ),
-                                                              decoration: BoxDecoration(
-                                                                gradient:
-                                                                    const LinearGradient(
+                                                            child: Builder(
+                                                              builder: (ctxImg) {
+                                                                final img =
+                                                                    (item['image1'] ??
+                                                                    item['image2'] ??
+                                                                    item['image3']);
+                                                                if (img !=
+                                                                    null) {
+                                                                  final heroTag =
+                                                                      'part-${item['id']}-img-0';
+                                                                  return Hero(
+                                                                    tag:
+                                                                        heroTag,
+                                                                    child: ClipRRect(
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                            11,
+                                                                          ),
+                                                                      child: Image.network(
+                                                                        ApiConfig.uploadUrl(
+                                                                          img.toString(),
+                                                                        ),
+                                                                        fit: BoxFit
+                                                                            .cover,
+                                                                        errorBuilder:
+                                                                            (
+                                                                              c,
+                                                                              e,
+                                                                              s,
+                                                                            ) => const Icon(
+                                                                              Icons.broken_image,
+                                                                              color: Colors.grey,
+                                                                            ),
+                                                                      ),
+                                                                    ),
+                                                                  );
+                                                                }
+                                                                return Container(
+                                                                  padding:
+                                                                      const EdgeInsets.all(
+                                                                        10,
+                                                                      ),
+                                                                  decoration: BoxDecoration(
+                                                                    gradient: const LinearGradient(
                                                                       colors: [
                                                                         STBG.navy,
                                                                         STBG.steel,
                                                                       ],
                                                                     ),
+                                                                    borderRadius:
+                                                                        BorderRadius.circular(
+                                                                          11,
+                                                                        ),
+                                                                  ),
+                                                                  child: const Icon(
+                                                                    Icons
+                                                                        .settings_outlined,
+                                                                    color: Colors
+                                                                        .white,
+                                                                    size: 19,
+                                                                  ),
+                                                                );
+                                                              },
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 14,
+                                                          ),
+                                                          Expanded(
+                                                            child: Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                Text(
+                                                                  item['reference'] ??
+                                                                      '-',
+                                                                  style: const TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w700,
+                                                                    fontSize:
+                                                                        14,
+                                                                    color: STBG
+                                                                        .textPrimary,
+                                                                  ),
+                                                                ),
+                                                                const SizedBox(
+                                                                  height: 3,
+                                                                ),
+                                                                if ((item['fournisseur_reference'] ??
+                                                                        '')
+                                                                    .toString()
+                                                                    .isNotEmpty)
+                                                                  Text(
+                                                                    item['fournisseur_reference']
+                                                                        .toString(),
+                                                                    style: const TextStyle(
+                                                                      color: STBG
+                                                                          .textSecondary,
+                                                                      fontSize:
+                                                                          11,
+                                                                    ),
+                                                                  ),
+                                                                if ((item['name'] ??
+                                                                        '')
+                                                                    .toString()
+                                                                    .isNotEmpty)
+                                                                  Text(
+                                                                    item['name']
+                                                                        .toString(),
+                                                                    style: const TextStyle(
+                                                                      color: STBG
+                                                                          .textSecondary,
+                                                                      fontSize:
+                                                                          12,
+                                                                    ),
+                                                                  )
+                                                                else
+                                                                  Text(
+                                                                    item['location'] ??
+                                                                        '-',
+                                                                    style: const TextStyle(
+                                                                      color: STBG
+                                                                          .textSecondary,
+                                                                      fontSize:
+                                                                          12,
+                                                                    ),
+                                                                  ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 12,
+                                                          ),
+                                                          if (isAdmin)
+                                                            Container(
+                                                              padding:
+                                                                  const EdgeInsets.symmetric(
+                                                                    horizontal:
+                                                                        10,
+                                                                    vertical: 7,
+                                                                  ),
+                                                              decoration: BoxDecoration(
+                                                                color: low
+                                                                    ? STBG.danger
+                                                                          .withOpacity(
+                                                                            0.10,
+                                                                          )
+                                                                    : STBG.navy
+                                                                          .withOpacity(
+                                                                            0.08,
+                                                                          ),
                                                                 borderRadius:
                                                                     BorderRadius.circular(
-                                                                      11,
+                                                                      10,
                                                                     ),
                                                               ),
-                                                              child: const Icon(
-                                                                Icons
-                                                                    .settings_outlined,
-                                                                color: Colors
-                                                                    .white,
-                                                                size: 19,
-                                                              ),
-                                                            );
-                                                          },
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 14),
-                                                      Expanded(
-                                                        child: Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Text(
-                                                              item['reference'] ??
-                                                                  '-',
-                                                              style: const TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                                fontSize: 14,
-                                                                color: STBG
-                                                                    .textPrimary,
-                                                              ),
-                                                            ),
-                                                            const SizedBox(
-                                                              height: 3,
-                                                            ),
-                                                            if ((item['fournisseur_reference'] ?? '').toString().isNotEmpty)
-                                                              Text(
-                                                                item['fournisseur_reference'].toString(),
-                                                                style: const TextStyle(
-                                                                  color: STBG.textSecondary,
-                                                                  fontSize: 11,
-                                                                ),
-                                                              ),
-                                                            if ((item['name'] ?? '').toString().isNotEmpty)
-                                                              Text(
-                                                                item['name'].toString(),
-                                                                style: const TextStyle(
-                                                                  color: STBG.textSecondary,
-                                                                  fontSize: 12,
-                                                                ),
-                                                              )
-                                                            else
-                                                              Text(
-                                                                item['location'] ??
-                                                                    '-',
-                                                                style: const TextStyle(
-                                                                  color: STBG
-                                                                      .textSecondary,
+                                                              child: Text(
+                                                                '$qty',
+                                                                style: TextStyle(
+                                                                  color: low
+                                                                      ? STBG.danger
+                                                                      : STBG.navy,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w700,
                                                                   fontSize: 12,
                                                                 ),
                                                               ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 12),
-                                                      Container(
-                                                        padding:
-                                                            const EdgeInsets.symmetric(
-                                                              horizontal: 10,
-                                                              vertical: 7,
                                                             ),
-                                                        decoration: BoxDecoration(
-                                                          color: low
-                                                              ? STBG.danger
-                                                                    .withOpacity(
-                                                                      0.10,
-                                                                    )
-                                                              : STBG.navy
-                                                                    .withOpacity(
-                                                                      0.08,
+                                                        ],
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 10,
+                                                      ),
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .end,
+                                                        children: [
+                                                          if (isAdmin)
+                                                            IconBtn(
+                                                              icon: Icons
+                                                                  .remove_circle_outline_rounded,
+                                                              color:
+                                                                  Colors.orange,
+                                                              onTap: () =>
+                                                                  _showTakeDialog(
+                                                                    item,
+                                                                  ),
+                                                            ),
+                                                          IconBtn(
+                                                            icon: Icons
+                                                                .visibility_outlined,
+                                                            color: STBG.steel,
+                                                            onTap: () =>
+                                                                Navigator.push(
+                                                                  ctx,
+                                                                  createRoute(
+                                                                    ResultPage(
+                                                                      data:
+                                                                          item,
+                                                                      token: widget
+                                                                          .token,
+                                                                      role: widget
+                                                                          .role,
                                                                     ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                10,
-                                                              ),
-                                                        ),
-                                                        child: Text(
-                                                          '$qty',
-                                                          style: TextStyle(
-                                                            color: low
-                                                                ? STBG.danger
-                                                                : STBG.navy,
-                                                            fontWeight:
-                                                                FontWeight.w700,
-                                                            fontSize: 12,
+                                                                  ),
+                                                                ),
                                                           ),
-                                                        ),
+                                                          if (isAdmin)
+                                                            IconBtn(
+                                                              icon: Icons
+                                                                  .edit_outlined,
+                                                              color:
+                                                                  STBG.success,
+                                                              onTap: () =>
+                                                                  _showEditDialog(
+                                                                    item,
+                                                                  ),
+                                                            ),
+                                                          if (isAdmin)
+                                                            IconBtn(
+                                                              icon: Icons
+                                                                  .delete_outline_rounded,
+                                                              color:
+                                                                  STBG.danger,
+                                                              onTap: () =>
+                                                                  _deletePart(
+                                                                    item['id'],
+                                                                  ),
+                                                            ),
+                                                        ],
                                                       ),
                                                     ],
                                                   ),
-                                                  const SizedBox(height: 10),
-                                                  Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment.end,
-                                                    children: [
-                                                      IconBtn(
-                                                        icon: Icons
-                                                            .remove_circle_outline_rounded,
-                                                        color: Colors.orange,
-                                                        onTap: () =>
-                                                            _showTakeDialog(
-                                                              item,
-                                                            ),
-                                                      ),
-                                                      IconBtn(
-                                                        icon: Icons
-                                                            .visibility_outlined,
-                                                        color: STBG.steel,
-                                                        onTap: () =>
-                                                            Navigator.push(
-                                                              ctx,
-                                                              createRoute(
-                                                                ResultPage(
-                                                                  data: item,
-                                                                  token: widget
-                                                                      .token,
-                                                                ),
-                                                              ),
-                                                            ),
-                                                      ),
-                                                      IconBtn(
-                                                        icon:
-                                                            Icons.edit_outlined,
-                                                        color: STBG.success,
-                                                        onTap: () =>
-                                                            _showEditDialog(
-                                                              item,
-                                                            ),
-                                                      ),
-                                                      IconBtn(
-                                                        icon: Icons
-                                                            .delete_outline_rounded,
-                                                        color: STBG.danger,
-                                                        onTap: () =>
-                                                            _deletePart(
-                                                              item['id'],
-                                                            ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ],
-                                              ),
+                                                ),
+                                              ],
                                             ),
-                                          ],
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
+                                      );
+                                    },
+                                  ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-          ),
+              ),
             ],
           ),
           Positioned(
@@ -1905,6 +2038,7 @@ class _ListPageState extends State<ListPage> {
             child: CustomBottomNavigationBar(
               currentIndex: 0,
               token: widget.token,
+              role: widget.role,
             ),
           ),
         ],
