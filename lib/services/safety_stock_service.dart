@@ -1,4 +1,5 @@
 import 'package:excel/excel.dart' as xl;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:gestion_piece_de_rechange/models/safety_stock_result.dart';
 
@@ -7,73 +8,79 @@ class SafetyStockService {
   static final Map<String, double> _delais = {};
   static bool _loaded = false;
 
-  // Charge le fichier Excel des délais DA depuis les assets.
-  // Structure attendue : colonne A = étiquette de ligne (référence),
-  //                      colonne B = moyenne du délai (en jours).
+  // Charge la table de délais depuis Feuil2.
   static Future<void> loadDelais() async {
     if (_loaded) return;
     try {
-      final ByteData data =
-          await rootBundle.load('assets/data/délaidetraiementDA.xlsx');
+      final ByteData data = await rootBundle.load(
+        'assets/data/délaidetraiementDA.xlsx',
+      );
       final xl.Excel excel = xl.Excel.decodeBytes(data.buffer.asUint8List());
 
-      xl.Sheet? delaySheet;
-      int headerIndex = -1;
-      for (final sheet in excel.sheets.values) {
-        final rows = sheet.rows;
-        for (int i = 0; i < rows.length; i++) {
-          final row = rows[i];
-          final first =
-              row.isNotEmpty
-                  ? row[0]?.value.toString().toLowerCase() ?? ''
-                  : '';
-          final second =
-              row.length > 1
-                  ? row[1]?.value.toString().toLowerCase() ?? ''
-                  : '';
-          if ((first.contains('étiquette') || first.contains('etiquette')) &&
-              (second.contains('moyenne') || second.contains('délai') ||
-                  second.contains('delai'))) {
-            delaySheet = sheet;
-            headerIndex = i;
-            break;
-          }
-        }
-        if (delaySheet != null) break;
-      }
-
+      final delaySheet = excel.tables['Feuil2'];
       if (delaySheet == null) {
-        throw StateError('No reference/delay worksheet found');
+        throw StateError('Worksheet Feuil2 not found');
       }
 
+      const headerIndex = 2; // Excel row 3; rows are zero-based.
       final rows = delaySheet.rows;
+      if (rows.length <= headerIndex) {
+        throw StateError('Feuil2 does not contain header row 3');
+      }
+
+      final headerRow = rows[headerIndex];
+      var referenceColumn = -1;
+      var delayColumn = -1;
+      for (var column = 0; column < headerRow.length; column++) {
+        final header = _normalizeHeader(_cellText(headerRow[column]?.value));
+        if (header == 'etiquettesdelignes') referenceColumn = column;
+        if (header == 'moyennededelai') delayColumn = column;
+      }
+      if (referenceColumn < 0 || delayColumn < 0) {
+        throw StateError(
+          'Feuil2 headers not found: '
+          '${headerRow.map((cell) => _cellText(cell?.value)).toList()}',
+        );
+      }
+
+      debugPrint(
+        '[SafetyStock] Excel sheet="Feuil2", headerRow=3, '
+        'referenceColumn=${referenceColumn + 1}, '
+        'delayColumn=${delayColumn + 1}',
+      );
 
       for (int i = headerIndex + 1; i < rows.length; i++) {
         final row = rows[i];
-        if (row.isEmpty) continue;
-
-        final labelCell = row.isNotEmpty ? row[0]?.value : null;
-        final delaiCell = row.length > 1 ? row[1]?.value : null;
+        final labelCell = row.length > referenceColumn
+            ? row[referenceColumn]?.value
+            : null;
+        final delaiCell = row.length > delayColumn
+            ? row[delayColumn]?.value
+            : null;
 
         if (labelCell == null || delaiCell == null) continue;
 
-        final String label = labelCell.toString().trim();
-        double? delai;
+        final String label = _referenceText(labelCell).trim();
+        final delai = _parseNumber(delaiCell);
 
-        if (delaiCell is xl.DoubleCellValue) {
-          delai = delaiCell.value;
-        } else if (delaiCell is xl.IntCellValue) {
-          delai = delaiCell.value.toDouble();
-        } else {
-          delai = double.tryParse(delaiCell.toString().replaceAll(',', '.'));
-        }
-
-        if (label.isNotEmpty && delai != null && delai > 0) {
+        if (label.isNotEmpty && delai != null && delai >= 0) {
           _delais[_normalizeReference(label)] = delai;
         }
       }
-    } catch (_) {
-      // Fichier absent ou mal formé → délai par défaut utilisé
+      debugPrint(
+        '[SafetyStock] Excel loaded: ${_delais.length} delay references '
+        'from Feuil2',
+      );
+      debugPrint(
+        '[SafetyStock] Excel samples: '
+        '${_delais.entries.take(5).map((entry) => '${entry.key}->${entry.value}').join(', ')}',
+      );
+      debugPrint(
+        '[SafetyStock] Excel lookup: 330106004406 -> '
+        '${_findDelay('330106004406')?.value ?? 'none'} days',
+      );
+    } catch (error, stackTrace) {
+      debugPrint('[SafetyStock] Excel load failed: $error\n$stackTrace');
     }
     _loaded = true;
   }
@@ -82,18 +89,68 @@ class SafetyStockService {
   // Cherche d'abord une correspondance exacte, puis partielle.
   // Si aucune correspondance, retourne [defaultDelai].
   static double getDelai(String reference, {double defaultDelai = 30.0}) {
-    final key = _normalizeReference(reference);
-    if (_delais.containsKey(key)) return _delais[key]!;
-    for (final entry in _delais.entries) {
-      if (key.contains(entry.key) || entry.key.contains(key)) {
-        return entry.value;
-      }
-    }
-    return defaultDelai;
+    return _findDelay(reference)?.value ?? defaultDelai;
   }
 
   static String _normalizeReference(String value) {
-    return value.trim().toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    return value.trim().toUpperCase().replaceAll(RegExp(r'[^A-Z0-9]'), '');
+  }
+
+  static String _normalizeHeader(String value) {
+    return value
+        .trim()
+        .toLowerCase()
+        .replaceAll('é', 'e')
+        .replaceAll('è', 'e')
+        .replaceAll('ê', 'e')
+        .replaceAll('ë', 'e')
+        .replaceAll('à', 'a')
+        .replaceAll('â', 'a')
+        .replaceAll('î', 'i')
+        .replaceAll('ï', 'i')
+        .replaceAll('ô', 'o')
+        .replaceAll('ù', 'u')
+        .replaceAll('û', 'u')
+        .replaceAll(RegExp(r'[^a-z0-9]'), '');
+  }
+
+  static double? _parseNumber(dynamic value) {
+    if (value is num) return value.toDouble();
+    final text = _cellText(
+      value,
+    ).trim().replaceAll('\u00a0', '').replaceAll(' ', '').replaceAll(',', '.');
+    return double.tryParse(text);
+  }
+
+  static String _referenceText(dynamic value) {
+    if (value is xl.TextCellValue) return value.value.text ?? '';
+    if (value is xl.IntCellValue) return value.value.toString();
+    if (value is xl.DoubleCellValue) {
+      return value.value == value.value.truncateToDouble()
+          ? value.value.toInt().toString()
+          : value.value.toString();
+    }
+    return _cellText(value);
+  }
+
+  static String _cellText(dynamic value) {
+    if (value is xl.TextCellValue) {
+      return value.value.text ?? '';
+    }
+    return value?.toString() ?? '';
+  }
+
+  static _DelayMatch? _findDelay(String reference) {
+    final key = _normalizeReference(reference);
+    if (key.isEmpty) return null;
+    final exact = _delais[key];
+    if (exact != null) return _DelayMatch(key, exact);
+    for (final entry in _delais.entries) {
+      if (key.contains(entry.key) || entry.key.contains(key)) {
+        return _DelayMatch(entry.key, entry.value);
+      }
+    }
+    return null;
   }
 
   // Calcule le stock de sécurité pour une liste de pièces.
@@ -106,12 +163,20 @@ class SafetyStockService {
     int periodDays = 90,
   }) {
     // Consommation totale par référence
-    final Map<String, int> totalConsumed = {};
+    final Map<String, double> totalConsumed = {};
     for (final a in activities) {
-      final ref = _normalizeReference((a['reference'] ?? '').toString());
-      final qty = a['quantity'] is int
-          ? a['quantity'] as int
-          : int.tryParse(a['quantity'].toString()) ?? 0;
+      final rawReference =
+          (a['reference'] ?? a['part_reference'] ?? a['piece_reference'] ?? '')
+              .toString();
+      final ref = _normalizeReference(rawReference);
+      final qty = _parseNumber(a['quantity']);
+      if (ref.isEmpty || qty == null || qty <= 0) {
+        debugPrint(
+          '[SafetyStock] Ignored activity: reference="$rawReference", '
+          'quantity="${a['quantity']}"',
+        );
+        continue;
+      }
       totalConsumed[ref] = (totalConsumed[ref] ?? 0) + qty;
     }
 
@@ -121,15 +186,28 @@ class SafetyStockService {
           ? part['quantity'] as int
           : int.tryParse(part['quantity'].toString()) ?? 0;
 
-      final consumed = totalConsumed[_normalizeReference(ref)] ?? 0;
-      final double consommationJour =
-          periodDays > 0 ? consumed / periodDays : 0;
-      final double delai = getDelai(ref);
+      final normalizedRef = _normalizeReference(ref);
+      final consumed = totalConsumed[normalizedRef] ?? 0;
+      final double consommationJour = periodDays > 0
+          ? consumed / periodDays
+          : 0;
+      final delayMatch = _findDelay(ref);
+      final double delai = delayMatch?.value ?? 30.0;
       final int safetyStock = (consommationJour * delai).ceil();
 
-      // Si pas d'historique de consommation, seuil fixe ≤ 5
-      final bool mustOrder =
-          safetyStock > 0 ? currentQty <= safetyStock : currentQty <= 5;
+      final bool mustOrder = safetyStock > 0
+          ? currentQty <= safetyStock
+          : currentQty <= 5;
+
+      debugPrint(
+        '[SafetyStock] partReference="$ref", '
+        'excelReference="${delayMatch?.reference ?? 'none'}", '
+        'delaiDA=${delai.toStringAsFixed(2)} days '
+        '${delayMatch == null ? '(fallback)' : '(Excel)'}, '
+        'totalOutgoing=${consumed.toStringAsFixed(2)}, '
+        'consumptionPerDay=${consommationJour.toStringAsFixed(4)}, '
+        'safetyStock=$safetyStock',
+      );
 
       return SafetyStockResult(
         reference: ref,
@@ -147,10 +225,18 @@ class SafetyStockService {
     required List parts,
     required List activities,
     int periodDays = 90,
-  }) =>
-      compute(parts: parts, activities: activities, periodDays: periodDays)
-          .where((r) => r.mustOrder)
-          .toList();
+  }) => compute(
+    parts: parts,
+    activities: activities,
+    periodDays: periodDays,
+  ).where((r) => r.mustOrder).toList();
 
   static Map<String, double> get delaisMap => Map.unmodifiable(_delais);
+}
+
+class _DelayMatch {
+  final String reference;
+  final double value;
+
+  const _DelayMatch(this.reference, this.value);
 }

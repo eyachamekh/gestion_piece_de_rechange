@@ -177,7 +177,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SizedBox(height: 20),
                         TranslatedText(
-                          'Content de te revoir',
+                          'Welcome back',
                           style: const TextStyle(
                             color: Color(0xFFD8B394),
                             fontSize: 11,
@@ -187,7 +187,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         const SizedBox(height: 4),
                         TranslatedText(
-                          'Responsable pièces de rechanges',
+                          'Spare Parts Manager',
                           style: const TextStyle(
                             color: Color(0xFFD8B394),
                             fontSize: 24,
@@ -230,7 +230,7 @@ class _HomePageState extends State<HomePage> {
                                                   ),
                                                 ),
                                                 child: MetricPanel(
-                                                  title: 'Total des pièces',
+                                                  title: 'Total Parts',
                                                   value: '$totalParts',
                                                   accent: const Color(
                                                     0xFF78BCEB,
@@ -250,7 +250,7 @@ class _HomePageState extends State<HomePage> {
                                                   ),
                                                 ),
                                                 child: MetricPanel(
-                                                  title: 'A commander',
+                                                  title: 'To Order',
                                                   value: '$orderAlertCount',
                                                   accent: const Color(
                                                     0xFFE8A33D,
@@ -274,7 +274,7 @@ class _HomePageState extends State<HomePage> {
                                                     ),
                                                   ),
                                                   child: MetricPanel(
-                                                    title: 'Total des pièces',
+                                                    title: 'Total Parts',
                                                     value: '$totalParts',
                                                     accent: const Color(
                                                       0xFF78BCEB,
@@ -296,7 +296,7 @@ class _HomePageState extends State<HomePage> {
                                                     ),
                                                   ),
                                                   child: MetricPanel(
-                                                    title: 'A commander',
+                                                    title: 'To Order',
                                                     value: '$orderAlertCount',
                                                     accent: const Color(
                                                       0xFFE8A33D,
@@ -337,7 +337,7 @@ class _HomePageState extends State<HomePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             TranslatedText(
-                              'Actions rapides',
+                              'Quick Actions',
                               style: const TextStyle(
                                 color: Color(0xFF111820),
                                 fontSize: 20,
@@ -356,7 +356,7 @@ class _HomePageState extends State<HomePage> {
                                 childAspectRatio: 1.3,
                                 children: [
                                   QuickActionCard(
-                                    title: t('Démarrer la numérisation'),
+                                    title: 'Start Scanning',
                                     accent: const Color(0xFFB9855D),
                                     onTap: () => Navigator.push(
                                       context,
@@ -370,7 +370,7 @@ class _HomePageState extends State<HomePage> {
                                     child: _ScanCardBody(),
                                   ),
                                   QuickActionCard(
-                                    title: t('Inventaire des pièces'),
+                                    title: 'Parts Inventory',
                                     accent: const Color(0xFFB9855D),
                                     onTap: () => Navigator.push(
                                       context,
@@ -385,7 +385,7 @@ class _HomePageState extends State<HomePage> {
                                   ),
                                   if (widget.role == 'admin')
                                     QuickActionCard(
-                                      title: t('Historique d\'activité'),
+                                      title: 'Activity History',
                                       accent: const Color(0xFFB9855D),
                                       onTap: () => Navigator.push(
                                         context,
@@ -479,7 +479,7 @@ class MetricPanel extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              Text(
+              TranslatedText(
                 title,
                 style: const TextStyle(
                   color: Color(0xFFE5E9EC),
@@ -553,7 +553,7 @@ class QuickActionCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(
+                          child: TranslatedText(
                             title,
                             style: const TextStyle(
                               color: Color(0xFF111820),
@@ -665,7 +665,7 @@ class _ActivityCardBody extends StatelessWidget {
               }),
               const SizedBox(width: 10),
               const TranslatedText(
-                'Activité',
+                'Activity',
                 style: TextStyle(
                   color: Color(0xFF6A7177),
                   fontSize: 11,

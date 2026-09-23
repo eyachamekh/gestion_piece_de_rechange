@@ -42,6 +42,7 @@ class _ListPageState extends State<ListPage> {
   bool loading = true;
   static const int _pageSize = 15;
   int _currentPage = 0;
+  String _searchQuery = '';
 
   int get _pageCount =>
       filteredList.isEmpty ? 1 : (filteredList.length / _pageSize).ceil();
@@ -61,7 +62,8 @@ class _ListPageState extends State<ListPage> {
     loadParts();
   }
 
-  Future<void> loadParts() async {
+  Future<void> loadParts({bool resetPage = false}) async {
+    final pageBeforeRefresh = _currentPage;
     final data = await fetchParts(widget.token);
     try {
       final res = await http.get(
@@ -76,10 +78,32 @@ class _ListPageState extends State<ListPage> {
       activities: _activities,
     );
 
+    final query = _searchQuery.toLowerCase();
+    final refreshedList = query.isEmpty
+        ? data
+        : data.where((item) {
+            return (item['reference'] ?? '').toString().toLowerCase().contains(
+                  query,
+                ) ||
+                (item['fournisseur_reference'] ?? '')
+                    .toString()
+                    .toLowerCase()
+                    .contains(query) ||
+                (item['name'] ?? '').toString().toLowerCase().contains(query);
+          }).toList();
+    final refreshedPageCount = refreshedList.isEmpty
+        ? 1
+        : (refreshedList.length / _pageSize).ceil();
+
+    if (!mounted) return;
     setState(() {
       allParts = data;
-      filteredList = data;
-      _currentPage = 0;
+      filteredList = refreshedList;
+      _currentPage = resetPage
+          ? 0
+          : (pageBeforeRefresh >= refreshedPageCount
+                ? refreshedPageCount - 1
+                : pageBeforeRefresh);
       _orderAlerts = alerts;
       _bannerDismissed = false;
       loading = false;
@@ -1449,8 +1473,9 @@ class _ListPageState extends State<ListPage> {
                                             ),
                                       ),
                                       onChanged: (v) => setState(() {
+                                        _searchQuery = v;
                                         filteredList = allParts.where((item) {
-                                          final q = v.toLowerCase();
+                                          final q = _searchQuery.toLowerCase();
                                           return (item['reference'] ?? '')
                                                   .toString()
                                                   .toLowerCase()

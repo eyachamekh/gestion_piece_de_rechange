@@ -460,6 +460,12 @@ Téléphone : 71 434 880
                                               '${_ssResult!.delaiJours.toStringAsFixed(0)} j',
                                           color: STBG.success,
                                         ),
+                                        const SizedBox(width: 8),
+                                        SSMetric(
+                                          label: 'Stock de sécurité',
+                                          value: '${_ssResult!.safetyStock}',
+                                          color: STBG.gold,
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 8),
@@ -1177,7 +1183,7 @@ class _ActionBtn extends StatelessWidget {
             children: [
               Icon(icon, color: color, size: 15),
               const SizedBox(width: 4),
-              Text(
+              TranslatedText(
                 label,
                 style: TextStyle(
                   color: color,
