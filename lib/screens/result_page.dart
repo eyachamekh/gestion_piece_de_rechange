@@ -151,6 +151,9 @@ Téléphone : 71 434 880
               child: InteractiveViewer(
                 child: Image.network(
                   url,
+                  headers: widget.token == null
+                      ? null
+                      : makeAuthHeaders(widget.token!),
                   fit: BoxFit.contain,
                   errorBuilder: (c, e, s) =>
                       const Icon(Icons.broken_image, color: Colors.grey),
@@ -176,11 +179,13 @@ Téléphone : 71 434 880
     final bool lowStock = qty <= 5;
     final bool mustOrder = _ssResult?.mustOrder ?? lowStock;
     final bool isOrderAlert = _ssResult != null && _ssResult!.mustOrder;
-    final imageValues = List.generate(7, (index) => 'image${index + 1}')
-        .map((key) => widget.data[key])
-        .where((value) => value != null && value.toString().trim().isNotEmpty)
-        .map((value) => value.toString())
-        .toList();
+    final partId = int.tryParse(widget.data['id']?.toString() ?? '');
+    final imageSlots = partId == null
+        ? <int>[]
+        : List.generate(
+            7,
+            (index) => index + 1,
+          ).where((slot) => ApiConfig.hasImage(widget.data, slot)).toList();
     final galleryHeight = MediaQuery.sizeOf(context).width < 600
         ? 320.0
         : 350.0;
@@ -245,7 +250,7 @@ Téléphone : 71 434 880
                           (widget.data['matchSource'] != null ||
                               widget.data['confidence'] != null))
                         const SizedBox(height: 8),
-                      if (imageValues.isNotEmpty)
+                      if (imageSlots.isNotEmpty)
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
                           child: Column(
@@ -284,13 +289,14 @@ Téléphone : 71 434 880
                                   child: PageView.builder(
                                     controller: _imageController,
                                     physics: const PageScrollPhysics(),
-                                    itemCount: imageValues.length,
+                                    itemCount: imageSlots.length,
                                     onPageChanged: (index) => setState(
                                       () => _currentImageIndex = index,
                                     ),
                                     itemBuilder: (context, index) {
-                                      final url = ApiConfig.uploadUrl(
-                                        imageValues[index],
+                                      final url = ApiConfig.imageUrl(
+                                        partId!,
+                                        imageSlots[index],
                                       );
                                       final tag =
                                           'part-${widget.data['id']}-img-$index';
@@ -314,6 +320,11 @@ Téléphone : 71 434 880
                                               tag: tag,
                                               child: Image.network(
                                                 url,
+                                                headers: widget.token == null
+                                                    ? null
+                                                    : makeAuthHeaders(
+                                                        widget.token!,
+                                                      ),
                                                 fit: BoxFit.contain,
                                                 errorBuilder:
                                                     (context, error, stack) =>
@@ -331,11 +342,11 @@ Téléphone : 71 434 880
                                   ),
                                 ),
                               ),
-                              if (imageValues.length > 1) ...[
+                              if (imageSlots.length > 1) ...[
                                 const SizedBox(height: 10),
                                 Center(
                                   child: Text(
-                                    '${_currentImageIndex + 1} / ${imageValues.length}',
+                                    '${_currentImageIndex + 1} / ${imageSlots.length}',
                                     style: const TextStyle(
                                       color: STBG.textSecondary,
                                       fontWeight: FontWeight.w600,
@@ -346,7 +357,7 @@ Téléphone : 71 434 880
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: List.generate(
-                                    imageValues.length,
+                                    imageSlots.length,
                                     (index) => AnimatedContainer(
                                       duration: const Duration(
                                         milliseconds: 180,
@@ -659,7 +670,10 @@ Téléphone : 71 434 880
   }
 
   Future<File> _rotateNetworkImage(String url) async {
-    final res = await http.get(Uri.parse(url));
+    final res = await http.get(
+      Uri.parse(url),
+      headers: widget.token == null ? null : makeAuthHeaders(widget.token!),
+    );
     final decoded = img.decodeImage(res.bodyBytes);
     if (decoded == null) throw Exception('Cannot decode image');
     final rotated = img.copyRotate(decoded, angle: 90);
@@ -682,11 +696,12 @@ Téléphone : 71 434 880
     final fournCtrl = TextEditingController(
       text: widget.data['fournisseur_reference'] ?? '',
     );
-    final List<String?> existing = List.generate(
+    final List<bool> existing = List.generate(
       7,
-      (i) => widget.data['image${i + 1}'] as String?,
+      (i) => ApiConfig.hasImage(widget.data, i + 1),
     );
     final List<XFile?> newImages = List<XFile?>.filled(7, null);
+    final List<bool> clearImages = List<bool>.filled(7, false);
     final picker = ImagePicker();
 
     Future<ImageSource?> pickSource() => showModalBottomSheet<ImageSource>(
@@ -796,7 +811,8 @@ Téléphone : 71 434 880
                             if (picked != null) {
                               setD(() {
                                 newImages[i] = picked;
-                                existing[i] = null;
+                                existing[i] = false;
+                                clearImages[i] = false;
                               });
                             }
                           },
@@ -816,18 +832,24 @@ Téléphone : 71 434 880
                                           ),
                                           fit: BoxFit.cover,
                                         )
-                                      : existing[i] != null
+                                      : existing[i]
                                       ? DecorationImage(
                                           image: NetworkImage(
-                                            ApiConfig.uploadUrl(existing[i]!),
+                                            ApiConfig.imageUrl(
+                                              widget.data['id'] as int,
+                                              i + 1,
+                                            ),
+                                            headers: widget.token == null
+                                                ? null
+                                                : makeAuthHeaders(
+                                                    widget.token!,
+                                                  ),
                                           ),
                                           fit: BoxFit.cover,
                                         )
                                       : null,
                                 ),
-                                child:
-                                    (newImages[i] == null &&
-                                        existing[i] == null)
+                                child: (newImages[i] == null && !existing[i])
                                     ? const Center(
                                         child: Icon(
                                           Icons.add_a_photo_outlined,
@@ -837,15 +859,19 @@ Téléphone : 71 434 880
                                       )
                                     : null,
                               ),
-                              if (newImages[i] != null || existing[i] != null)
+                              if (newImages[i] != null || existing[i])
                                 Positioned(
                                   top: 4,
                                   right: 4,
                                   child: GestureDetector(
                                     behavior: HitTestBehavior.opaque,
                                     onTap: () => setD(() {
+                                      clearImages[i] =
+                                          clearImages[i] ||
+                                          existing[i] ||
+                                          newImages[i] != null;
                                       newImages[i] = null;
-                                      existing[i] = null;
+                                      existing[i] = false;
                                     }),
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
@@ -861,7 +887,7 @@ Téléphone : 71 434 880
                                     ),
                                   ),
                                 ),
-                              if (newImages[i] != null || existing[i] != null)
+                              if (newImages[i] != null || existing[i])
                                 Positioned(
                                   bottom: 4,
                                   right: 4,
@@ -879,16 +905,18 @@ Téléphone : 71 434 880
                                               rotated.path,
                                             ),
                                           );
-                                        } else if (existing[i] != null) {
+                                        } else if (existing[i]) {
                                           final rotated =
                                               await _rotateNetworkImage(
-                                                ApiConfig.uploadUrl(
-                                                  existing[i]!,
+                                                ApiConfig.imageUrl(
+                                                  widget.data['id'] as int,
+                                                  i + 1,
                                                 ),
                                               );
                                           setD(() {
                                             newImages[i] = XFile(rotated.path);
-                                            existing[i] = null;
+                                            existing[i] = false;
+                                            clearImages[i] = false;
                                           });
                                         }
                                       } catch (e) {
@@ -963,13 +991,24 @@ Téléphone : 71 434 880
                     } catch (e) {
                       debugPrint('Embedding error: $e');
                     }
-                  } else if (existing[i] == null) {
+                  } else if (clearImages[i]) {
                     req.fields['clear_image${i + 1}'] = '1';
                   }
                 }
                 final streamed = await req.send();
                 if (!mounted) return;
                 if (streamed.statusCode == 200 || streamed.statusCode == 201) {
+                  final updatedPartId = int.parse(widget.data['id'].toString());
+                  for (var slot = 0; slot < 7; slot++) {
+                    if (newImages[slot] != null || clearImages[slot]) {
+                      await NetworkImage(
+                        ApiConfig.imageUrl(updatedPartId, slot + 1),
+                        headers: widget.token == null
+                            ? null
+                            : makeAuthHeaders(widget.token!),
+                      ).evict();
+                    }
+                  }
                   if (updatedQuantity != previousQuantity) {
                     final now = formatLocalDateTimeForApi(DateTime.now());
                     addToHistory({
@@ -993,12 +1032,30 @@ Téléphone : 71 434 880
                     widget.data['name'] = nameCtrl.text;
                     widget.data['fournisseur_reference'] = fournCtrl.text;
                     for (int i = 0; i < 7; i++) {
-                      if (newImages[i] != null)
-                        widget.data['image${i + 1}'] = newImages[i]!.path;
-                      else if (existing[i] == null)
+                      if (newImages[i] != null) {
                         widget.data['image${i + 1}'] = null;
+                        widget.data['has_image${i + 1}'] = 1;
+                      } else if (clearImages[i]) {
+                        widget.data['image${i + 1}'] = null;
+                        widget.data['has_image${i + 1}'] = 0;
+                        widget.data['embedding${i + 1}'] = null;
+                      }
+                    }
+                    final remainingImageCount =
+                        List.generate(7, (index) => index + 1)
+                            .where(
+                              (slot) => ApiConfig.hasImage(widget.data, slot),
+                            )
+                            .length;
+                    if (remainingImageCount == 0) {
+                      _currentImageIndex = 0;
+                    } else if (_currentImageIndex >= remainingImageCount) {
+                      _currentImageIndex = remainingImageCount - 1;
                     }
                   });
+                  if (_imageController.hasClients) {
+                    _imageController.jumpToPage(_currentImageIndex);
+                  }
                   Navigator.pop(context);
                 } else {
                   final body = await streamed.stream.bytesToString();

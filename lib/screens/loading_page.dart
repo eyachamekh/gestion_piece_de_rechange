@@ -10,6 +10,7 @@ import 'package:gestion_piece_de_rechange/services/api_service.dart';
 import 'package:gestion_piece_de_rechange/services/image_classifier_service.dart';
 import 'package:gestion_piece_de_rechange/services/visual_gallery_service.dart';
 import 'package:gestion_piece_de_rechange/services/text_recognition_service.dart';
+import 'package:gestion_piece_de_rechange/services/auth_headers.dart';
 import 'package:gestion_piece_de_rechange/utils/app_utils.dart';
 import 'package:gestion_piece_de_rechange/widgets/shared_widgets.dart';
 import 'package:gestion_piece_de_rechange/config/api_config.dart';
@@ -300,6 +301,13 @@ class _LoadingPageState extends State<LoadingPage>
         'image5': p['image5'],
         'image6': p['image6'],
         'image7': p['image7'],
+        'has_image1': p['has_image1'],
+        'has_image2': p['has_image2'],
+        'has_image3': p['has_image3'],
+        'has_image4': p['has_image4'],
+        'has_image5': p['has_image5'],
+        'has_image6': p['has_image6'],
+        'has_image7': p['has_image7'],
         'confidence': sc,
         'matchSource': best['matchSource'],
       };
@@ -354,7 +362,15 @@ class _LoadingPageState extends State<LoadingPage>
     return bestScore >= 0.9 ? best : null;
   }
 
-  Widget _buildSimilarityThumb(String? img, {double size = 56}) {
+  Widget _buildSimilarityThumb(Map part, {double size = 56}) {
+    int? imageSlot;
+    for (var slot = 1; slot <= 7; slot++) {
+      if (ApiConfig.hasImage(part, slot)) {
+        imageSlot = slot;
+        break;
+      }
+    }
+    final partId = int.tryParse(part['id']?.toString() ?? '');
     final imageBox = Container(
       width: size,
       height: size,
@@ -364,9 +380,10 @@ class _LoadingPageState extends State<LoadingPage>
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: img != null && img.isNotEmpty
+        child: imageSlot != null && partId != null
             ? Image.network(
-                ApiConfig.uploadUrl(img),
+                ApiConfig.imageUrl(partId, imageSlot),
+                headers: makeAuthHeaders(widget.token),
                 width: size,
                 height: size,
                 fit: BoxFit.cover,
@@ -449,21 +466,12 @@ class _LoadingPageState extends State<LoadingPage>
                         const Divider(height: 12),
                     itemBuilder: (c, i) {
                       final p = parts[i] as Map<String, dynamic>;
-                      String? img;
-                      for (int j = 1; j <= 7; j++) {
-                        final candidate = p['image$j'];
-                        if (candidate != null &&
-                            candidate.toString().isNotEmpty) {
-                          img = candidate.toString();
-                          break;
-                        }
-                      }
                       return ListTile(
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 8,
                         ),
-                        leading: _buildSimilarityThumb(img),
+                        leading: _buildSimilarityThumb(p),
                         title: Text(
                           p['reference'] ?? '-',
                           style: const TextStyle(fontWeight: FontWeight.w700),
@@ -576,21 +584,12 @@ class _LoadingPageState extends State<LoadingPage>
                       final m = matches[i];
                       final p = m['part'] as Map<String, dynamic>;
                       final sc = (m['score'] as double) * 100.0;
-                      String? img;
-                      for (int j = 1; j <= 7; j++) {
-                        final candidate = p['image$j'];
-                        if (candidate != null &&
-                            candidate.toString().isNotEmpty) {
-                          img = candidate.toString();
-                          break;
-                        }
-                      }
                       return ListTile(
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 8,
                           vertical: 8,
                         ),
-                        leading: _buildSimilarityThumb(img),
+                        leading: _buildSimilarityThumb(p),
                         title: Text(
                           p['reference'] ?? '-',
                           style: const TextStyle(fontWeight: FontWeight.w700),

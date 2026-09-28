@@ -7,6 +7,7 @@ const bcrypt = require("bcryptjs");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const detectImageMime = require("./image_mime");
 
 const uploadsDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
@@ -18,11 +19,43 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 const SECRET = process.env.JWT_SECRET;
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, "uploads")),
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 8 * 1024 * 1024,
+    fieldSize: 10 * 1024 * 1024,
+    files: 7,
+  },
 });
-const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024, fieldSize: 10 * 1024 * 1024 } });
+const imageUploadFields = Array.from({ length: 7 }, (_, index) => ({
+  name: `image${index + 1}`,
+  maxCount: 1,
+}));
+const maxTotalImageBytes = 48 * 1024 * 1024;
+
+function parseImageUpload(req, res, next) {
+  upload.fields(imageUploadFields)(req, res, (err) => {
+    if (err) {
+      const status =
+        err.code === "LIMIT_FILE_SIZE" || err.code === "LIMIT_FILE_COUNT"
+          ? 413
+          : 400;
+      return res.status(status).json({ error: err.message });
+    }
+
+    const totalBytes = Object.values(req.files || {}).reduce(
+      (total, files) =>
+        total + files.reduce((size, file) => size + file.size, 0),
+      0,
+    );
+    if (totalBytes > maxTotalImageBytes) {
+      return res.status(413).json({
+        error: "The combined image upload must not exceed 48 MiB.",
+      });
+    }
+    return next();
+  });
+}
 // //laptop
 // const db = mysql.createConnection({
 //   host: process.env.DB_HOST || "localhost",
@@ -110,8 +143,26 @@ function verifyToken(req, res, next) {
 }
 
 //  GET PARTS
+const partResponseColumns = [
+  "id",
+  "reference",
+  "location",
+  "quantity",
+  "`name`",
+  "fournisseur_reference",
+  "created_at",
+  ...Array.from({ length: 7 }, (_, index) => `image${index + 1}`),
+  ...Array.from({ length: 7 }, (_, index) => `embedding${index + 1}`),
+  ...Array.from(
+    { length: 7 },
+    (_, index) =>
+      `CASE WHEN image${index + 1}_data IS NOT NULL THEN 1 ELSE 0 END AS has_image${index + 1}`,
+  ),
+].join(", ");
+
 app.get("/api/parts", verifyToken, (req, res) => {
-  db.query("SELECT * FROM parts", (err, results) => {
+  db.query(`SELECT ${partResponseColumns} FROM parts`, (err, results) => {
+    if (err) return res.status(500).json({ error: err.message });
     res.json(results);
   });
 });
@@ -140,7 +191,7 @@ app.get("/api/parts/search-reference", verifyToken, (req, res) => {
   const normFour = normalize.replace('%s', 'fournisseur_reference');
 
   const exactSql = `
-    SELECT * FROM parts
+    SELECT ${partResponseColumns} FROM parts
     WHERE ${normRef} = ? OR ${normFour} = ?
     LIMIT 1
   `;
@@ -153,7 +204,7 @@ app.get("/api/parts/search-reference", verifyToken, (req, res) => {
 
     const like = '%' + normalizedReference + '%';
     const partialSql = `
-      SELECT * FROM parts
+      SELECT ${partResponseColumns} FROM parts
       WHERE ${normRef} LIKE ?
          OR ${normFour} LIKE ?
          OR UPPER(COALESCE(name, '')) LIKE ?
@@ -166,29 +217,100 @@ app.get("/api/parts/search-reference", verifyToken, (req, res) => {
   });
 });
 
-// ADD PART (with 3 to 7 images & embeddings)
-app.post("/api/parts", verifyToken, upload.fields([
-  { name: "image1", maxCount: 1 },
-  { name: "image2", maxCount: 1 },
-  { name: "image3", maxCount: 1 },
-  { name: "image4", maxCount: 1 },
-  { name: "image5", maxCount: 1 },
-  { name: "image6", maxCount: 1 },
-  { name: "image7", maxCount: 1 },
-]), (req, res) => {
-  const { reference, location, quantity, name, fournisseur_reference, embedding1, embedding2, embedding3, embedding4, embedding5, embedding6, embedding7 } = req.body;
-  const files = req.files || {};
-  const image1 = files["image1"] ? files["image1"][0].filename : null;
-  const image2 = files["image2"] ? files["image2"][0].filename : null;
-  const image3 = files["image3"] ? files["image3"][0].filename : null;
-  const image4 = files["image4"] ? files["image4"][0].filename : null;
-  const image5 = files["image5"] ? files["image5"][0].filename : null;
-  const image6 = files["image6"] ? files["image6"][0].filename : null;
-  const image7 = files["image7"] ? files["image7"][0].filename : null;
-  const created_at = new Date().toISOString().slice(0, 19).replace("T", " ");
+app.get("/api/parts/:id/image/:slot", verifyToken, (req, res) => {
+  const partId = Number(req.params.id);
+  const slot = Number(req.params.slot);
+  if (!Number.isSafeInteger(partId) || partId <= 0) {
+    return res.status(400).json({ error: "Invalid part ID." });
+  }
+  if (!Number.isInteger(slot) || slot < 1 || slot > 7) {
+    return res.status(400).json({ error: "Image slot must be between 1 and 7." });
+  }
+
   db.query(
-    "INSERT INTO parts (reference, location, quantity, `name`, fournisseur_reference, image1, image2, image3, image4, image5, image6, image7, embedding1, embedding2, embedding3, embedding4, embedding5, embedding6, embedding7, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-    [reference, location, quantity, name || null, fournisseur_reference || null, image1, image2, image3, image4, image5, image6, image7, embedding1 || null, embedding2 || null, embedding3 || null, embedding4 || null, embedding5 || null, embedding6 || null, embedding7 || null, created_at],
+    `SELECT image${slot}_data, image${slot}_mime FROM parts WHERE id=? LIMIT 1`,
+    [partId],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: err.message });
+      if (!rows || rows.length === 0) {
+        return res.status(404).json({ error: "Part not found." });
+      }
+      const { [`image${slot}_data`]: imageData, [`image${slot}_mime`]: imageMime } =
+        rows[0];
+      if (!imageData) {
+        return res.status(404).json({ error: "Image not found." });
+      }
+      res.set("Content-Type", imageMime || "application/octet-stream");
+      res.set("Content-Length", imageData.length);
+      return res.send(imageData);
+    },
+  );
+});
+
+// ADD PART (with 1 to 7 images & embeddings)
+app.post("/api/parts", verifyToken, parseImageUpload, (req, res) => {
+  const {
+    reference,
+    location,
+    quantity,
+    name,
+    fournisseur_reference,
+    embedding1,
+    embedding2,
+    embedding3,
+    embedding4,
+    embedding5,
+    embedding6,
+    embedding7,
+  } = req.body;
+  const files = req.files || {};
+  const columns = [
+    "reference",
+    "location",
+    "quantity",
+    "`name`",
+    "fournisseur_reference",
+    ...Array.from({ length: 7 }, (_, index) => `image${index + 1}`),
+    ...Array.from(
+      { length: 7 },
+      (_, index) => `image${index + 1}_data`,
+    ),
+    ...Array.from(
+      { length: 7 },
+      (_, index) => `image${index + 1}_mime`,
+    ),
+    ...Array.from({ length: 7 }, (_, index) => `embedding${index + 1}`),
+    "created_at",
+  ];
+  const values = [
+    reference,
+    location,
+    quantity,
+    name || null,
+    fournisseur_reference || null,
+    ...Array(7).fill(null),
+    ...Array.from({ length: 7 }, (_, index) => {
+      const file = files[`image${index + 1}`]?.[0];
+      return file ? file.buffer : null;
+    }),
+    ...Array.from({ length: 7 }, (_, index) => {
+      const file = files[`image${index + 1}`]?.[0];
+      return file
+        ? detectImageMime(file.buffer, file.originalname, file.mimetype)
+        : null;
+    }),
+    embedding1 || null,
+    embedding2 || null,
+    embedding3 || null,
+    embedding4 || null,
+    embedding5 || null,
+    embedding6 || null,
+    embedding7 || null,
+    new Date().toISOString().slice(0, 19).replace("T", " "),
+  ];
+  db.query(
+    `INSERT INTO parts (${columns.join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`,
+    values,
     (err, result) => {
       if (err) return res.status(500).json({ error: err.message });
       res.json({ success: true, id: result.insertId });
@@ -200,43 +322,46 @@ app.post("/api/parts", verifyToken, upload.fields([
 app.put("/api/parts/:id", verifyToken, (req, res, next) => {
   // If JSON body (no multipart), skip multer
   if (req.is('application/json')) return next();
-  upload.fields([
-    { name: "image1", maxCount: 1 },
-    { name: "image2", maxCount: 1 },
-    { name: "image3", maxCount: 1 },
-    { name: "image4", maxCount: 1 },
-    { name: "image5", maxCount: 1 },
-    { name: "image6", maxCount: 1 },
-    { name: "image7", maxCount: 1 },
-  ])(req, res, next);
+  parseImageUpload(req, res, next);
 }, (req, res) => {
-  const { reference, location, quantity, name, fournisseur_reference, embedding1, embedding2, embedding3, embedding4, embedding5, embedding6, embedding7 } = req.body;
+  const {
+    reference,
+    location,
+    quantity,
+    name,
+    fournisseur_reference,
+  } = req.body;
   const files = req.files || {};
 
   const fields = ["reference=?", "location=?", "quantity=?", "`name`=?", "fournisseur_reference=?"];
   const values = [reference, location, quantity, name !== undefined ? (name || null) : null, fournisseur_reference !== undefined ? (fournisseur_reference || null) : null];
 
-  if (files["image1"]) { fields.push("image1=?"); values.push(files["image1"][0].filename); }
-  else if (req.body.clear_image1 === '1') { fields.push("image1=?"); values.push(null); }
-  if (files["image2"]) { fields.push("image2=?"); values.push(files["image2"][0].filename); }
-  else if (req.body.clear_image2 === '1') { fields.push("image2=?"); values.push(null); }
-  if (files["image3"]) { fields.push("image3=?"); values.push(files["image3"][0].filename); }
-  else if (req.body.clear_image3 === '1') { fields.push("image3=?"); values.push(null); }
-  if (files["image4"]) { fields.push("image4=?"); values.push(files["image4"][0].filename); }
-  else if (req.body.clear_image4 === '1') { fields.push("image4=?"); values.push(null); }
-  if (files["image5"]) { fields.push("image5=?"); values.push(files["image5"][0].filename); }
-  else if (req.body.clear_image5 === '1') { fields.push("image5=?"); values.push(null); }
-  if (files["image6"]) { fields.push("image6=?"); values.push(files["image6"][0].filename); }
-  else if (req.body.clear_image6 === '1') { fields.push("image6=?"); values.push(null); }
-  if (files["image7"]) { fields.push("image7=?"); values.push(files["image7"][0].filename); }
-  else if (req.body.clear_image7 === '1') { fields.push("image7=?"); values.push(null); }
-  if (embedding1) { fields.push("embedding1=?"); values.push(embedding1); }
-  if (embedding2) { fields.push("embedding2=?"); values.push(embedding2); }
-  if (embedding3) { fields.push("embedding3=?"); values.push(embedding3); }
-  if (embedding4) { fields.push("embedding4=?"); values.push(embedding4); }
-  if (embedding5) { fields.push("embedding5=?"); values.push(embedding5); }
-  if (embedding6) { fields.push("embedding6=?"); values.push(embedding6); }
-  if (embedding7) { fields.push("embedding7=?"); values.push(embedding7); }
+  for (let slot = 1; slot <= 7; slot += 1) {
+    const file = files[`image${slot}`]?.[0];
+    if (file) {
+      fields.push(`image${slot}=?`, `image${slot}_data=?`, `image${slot}_mime=?`);
+      values.push(
+        null,
+        file.buffer,
+        detectImageMime(file.buffer, file.originalname, file.mimetype),
+      );
+      if (req.body[`embedding${slot}`]) {
+        fields.push(`embedding${slot}=?`);
+        values.push(req.body[`embedding${slot}`]);
+      }
+    } else if (req.body[`clear_image${slot}`] === "1") {
+      fields.push(
+        `image${slot}=?`,
+        `image${slot}_data=?`,
+        `image${slot}_mime=?`,
+        `embedding${slot}=?`,
+      );
+      values.push(null, null, null, null);
+    } else if (req.body[`embedding${slot}`]) {
+      fields.push(`embedding${slot}=?`);
+      values.push(req.body[`embedding${slot}`]);
+    }
+  }
 
   values.push(req.params.id);
   db.query(

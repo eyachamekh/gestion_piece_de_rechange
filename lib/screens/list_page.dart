@@ -377,11 +377,11 @@ class _ListPageState extends State<ListPage> {
               ),
               onPressed: () async {
                 final selectedCount = images.where((img) => img != null).length;
-                if (selectedCount < 3 || selectedCount > 7) {
+                if (selectedCount < 1 || selectedCount > 7) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
-                        'Please add at least 3 photos and no more than 7.',
+                        'Please add at least 1 photo and no more than 7.',
                       ),
                     ),
                   );
@@ -454,7 +454,10 @@ class _ListPageState extends State<ListPage> {
   }
 
   Future<File> _rotateNetworkImage(String url) async {
-    final res = await http.get(Uri.parse(url));
+    final res = await http.get(
+      Uri.parse(url),
+      headers: makeAuthHeaders(widget.token),
+    );
     final decoded = img.decodeImage(res.bodyBytes);
     if (decoded == null) throw Exception('Cannot decode image');
     final rotated = img.copyRotate(decoded, angle: 90);
@@ -475,12 +478,12 @@ class _ListPageState extends State<ListPage> {
     final fournCtrl = TextEditingController(
       text: item['fournisseur_reference'] ?? '',
     );
-    // existing[i] = server filename, null means slot is empty or replaced
-    final List<String?> existing = List.generate(
+    final List<bool> existing = List.generate(
       7,
-      (i) => item['image${i + 1}'] as String?,
+      (i) => ApiConfig.hasImage(item, i + 1),
     );
     final List<XFile?> newImages = List<XFile?>.filled(7, null);
+    final List<bool> clearImages = List<bool>.filled(7, false);
     final picker = ImagePicker();
 
     Future<ImageSource?> pickSource() async {
@@ -592,7 +595,8 @@ class _ListPageState extends State<ListPage> {
                             if (picked != null) {
                               setD(() {
                                 newImages[i] = picked;
-                                existing[i] = null; // replaced
+                                existing[i] = false;
+                                clearImages[i] = false;
                               });
                             }
                           },
@@ -612,18 +616,22 @@ class _ListPageState extends State<ListPage> {
                                           ),
                                           fit: BoxFit.cover,
                                         )
-                                      : existing[i] != null
+                                      : existing[i]
                                       ? DecorationImage(
                                           image: NetworkImage(
-                                            ApiConfig.uploadUrl(existing[i]!),
+                                            ApiConfig.imageUrl(
+                                              item['id'] as int,
+                                              i + 1,
+                                            ),
+                                            headers: makeAuthHeaders(
+                                              widget.token,
+                                            ),
                                           ),
                                           fit: BoxFit.cover,
                                         )
                                       : null,
                                 ),
-                                child:
-                                    (newImages[i] == null &&
-                                        existing[i] == null)
+                                child: (newImages[i] == null && !existing[i])
                                     ? const Center(
                                         child: Icon(
                                           Icons.add_a_photo_outlined,
@@ -633,15 +641,19 @@ class _ListPageState extends State<ListPage> {
                                       )
                                     : null,
                               ),
-                              if (newImages[i] != null || existing[i] != null)
+                              if (newImages[i] != null || existing[i])
                                 Positioned(
                                   top: 4,
                                   right: 4,
                                   child: GestureDetector(
                                     behavior: HitTestBehavior.opaque,
                                     onTap: () => setD(() {
+                                      clearImages[i] =
+                                          clearImages[i] ||
+                                          existing[i] ||
+                                          newImages[i] != null;
                                       newImages[i] = null;
-                                      existing[i] = null;
+                                      existing[i] = false;
                                     }),
                                     child: Container(
                                       padding: const EdgeInsets.all(4),
@@ -657,7 +669,7 @@ class _ListPageState extends State<ListPage> {
                                     ),
                                   ),
                                 ),
-                              if (newImages[i] != null || existing[i] != null)
+                              if (newImages[i] != null || existing[i])
                                 Positioned(
                                   bottom: 4,
                                   right: 4,
@@ -675,16 +687,18 @@ class _ListPageState extends State<ListPage> {
                                               rotated.path,
                                             ),
                                           );
-                                        } else if (existing[i] != null) {
+                                        } else if (existing[i]) {
                                           final rotated =
                                               await _rotateNetworkImage(
-                                                ApiConfig.uploadUrl(
-                                                  existing[i]!,
+                                                ApiConfig.imageUrl(
+                                                  item['id'] as int,
+                                                  i + 1,
                                                 ),
                                               );
                                           setD(() {
                                             newImages[i] = XFile(rotated.path);
-                                            existing[i] = null;
+                                            existing[i] = false;
+                                            clearImages[i] = false;
                                           });
                                         }
                                       } catch (e) {
@@ -759,14 +773,21 @@ class _ListPageState extends State<ListPage> {
                     } catch (e) {
                       debugPrint('Embedding calculation error: $e');
                     }
-                  } else if (existing[i] == null) {
-                    // slot was cleared — tell backend to remove it
+                  } else if (clearImages[i]) {
                     req.fields['clear_image${i + 1}'] = '1';
                   }
                 }
                 final streamed = await req.send();
                 if (!mounted) return;
                 if (streamed.statusCode == 200 || streamed.statusCode == 201) {
+                  for (var slot = 0; slot < 7; slot++) {
+                    if (newImages[slot] != null || clearImages[slot]) {
+                      await NetworkImage(
+                        ApiConfig.imageUrl(item['id'] as int, slot + 1),
+                        headers: makeAuthHeaders(widget.token),
+                      ).evict();
+                    }
+                  }
                   if (updatedQuantity != previousQuantity) {
                     final now = formatLocalDateTimeForApi(DateTime.now());
                     addToHistory({
@@ -1719,13 +1740,16 @@ class _ListPageState extends State<ListPage> {
                                             child: Column(
                                               children: [
                                                 if (isAdmin &&
-                                                    item['image1'] == null &&
-                                                    item['image2'] == null &&
-                                                    item['image3'] == null &&
-                                                    item['image4'] == null &&
-                                                    item['image5'] == null &&
-                                                    item['image6'] == null &&
-                                                    item['image7'] == null)
+                                                    !List.generate(
+                                                      7,
+                                                      (index) =>
+                                                          ApiConfig.hasImage(
+                                                            item,
+                                                            index + 1,
+                                                          ),
+                                                    ).any(
+                                                      (hasImage) => hasImage,
+                                                    ))
                                                   GestureDetector(
                                                     onTap: () =>
                                                         _showEditDialog(item),
@@ -1811,33 +1835,23 @@ class _ListPageState extends State<ListPage> {
                                                                 ),
                                                             child: Builder(
                                                               builder: (ctxImg) {
-                                                                final imageName =
-                                                                    List.generate(
-                                                                          7,
-                                                                          (
-                                                                            index,
-                                                                          ) =>
-                                                                              item['image${index + 1}'],
-                                                                        )
-                                                                        .whereType<
-                                                                          String
-                                                                        >()
-                                                                        .map(
-                                                                          (
-                                                                            value,
-                                                                          ) => value
-                                                                              .trim(),
-                                                                        )
-                                                                        .firstWhere(
-                                                                          (
-                                                                            value,
-                                                                          ) => value
-                                                                              .isNotEmpty,
-                                                                          orElse: () =>
-                                                                              '',
-                                                                        );
-                                                                if (imageName
-                                                                    .isNotEmpty) {
+                                                                int? imageSlot;
+                                                                for (
+                                                                  var slot = 1;
+                                                                  slot <= 7;
+                                                                  slot++
+                                                                ) {
+                                                                  if (ApiConfig.hasImage(
+                                                                    item,
+                                                                    slot,
+                                                                  )) {
+                                                                    imageSlot =
+                                                                        slot;
+                                                                    break;
+                                                                  }
+                                                                }
+                                                                if (imageSlot !=
+                                                                    null) {
                                                                   final heroTag =
                                                                       'part-${item['id']}-img-0';
                                                                   return Hero(
@@ -1849,8 +1863,14 @@ class _ListPageState extends State<ListPage> {
                                                                             11,
                                                                           ),
                                                                       child: Image.network(
-                                                                        ApiConfig.uploadUrl(
-                                                                          imageName,
+                                                                        ApiConfig.imageUrl(
+                                                                          item['id']
+                                                                              as int,
+                                                                          imageSlot,
+                                                                        ),
+                                                                        headers: makeAuthHeaders(
+                                                                          widget
+                                                                              .token,
                                                                         ),
                                                                         fit: BoxFit
                                                                             .cover,

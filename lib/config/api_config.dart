@@ -20,5 +20,13 @@ class ApiConfig {
     return '$baseUrl$path';
   }
 
+  static String imageUrl(int partId, int slot) =>
+      url('/api/parts/$partId/image/$slot');
+
+  static bool hasImage(Map part, int slot) =>
+      slot >= 1 &&
+      slot <= 7 &&
+      (part['has_image$slot'] == 1 || part['has_image$slot'] == true);
+
   static String uploadUrl(String filename) => url('/uploads/$filename');
 }
