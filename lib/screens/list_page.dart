@@ -1721,7 +1721,11 @@ class _ListPageState extends State<ListPage> {
                                                 if (isAdmin &&
                                                     item['image1'] == null &&
                                                     item['image2'] == null &&
-                                                    item['image3'] == null)
+                                                    item['image3'] == null &&
+                                                    item['image4'] == null &&
+                                                    item['image5'] == null &&
+                                                    item['image6'] == null &&
+                                                    item['image7'] == null)
                                                   GestureDetector(
                                                     onTap: () =>
                                                         _showEditDialog(item),
@@ -1807,12 +1811,33 @@ class _ListPageState extends State<ListPage> {
                                                                 ),
                                                             child: Builder(
                                                               builder: (ctxImg) {
-                                                                final img =
-                                                                    (item['image1'] ??
-                                                                    item['image2'] ??
-                                                                    item['image3']);
-                                                                if (img !=
-                                                                    null) {
+                                                                final imageName =
+                                                                    List.generate(
+                                                                          7,
+                                                                          (
+                                                                            index,
+                                                                          ) =>
+                                                                              item['image${index + 1}'],
+                                                                        )
+                                                                        .whereType<
+                                                                          String
+                                                                        >()
+                                                                        .map(
+                                                                          (
+                                                                            value,
+                                                                          ) => value
+                                                                              .trim(),
+                                                                        )
+                                                                        .firstWhere(
+                                                                          (
+                                                                            value,
+                                                                          ) => value
+                                                                              .isNotEmpty,
+                                                                          orElse: () =>
+                                                                              '',
+                                                                        );
+                                                                if (imageName
+                                                                    .isNotEmpty) {
                                                                   final heroTag =
                                                                       'part-${item['id']}-img-0';
                                                                   return Hero(
@@ -1824,8 +1849,17 @@ class _ListPageState extends State<ListPage> {
                                                                             11,
                                                                           ),
                                                                       child: Image.network(
-                                                                        ApiConfig.uploadUrl(img.toString()),
-                                                                        fit: BoxFit.cover,
+                                                                        ApiConfig.uploadUrl(
+                                                                          imageName,
+                                                                        ),
+                                                                        fit: BoxFit
+                                                                            .cover,
+                                                                        cacheWidth:
+                                                                            (56 *
+                                                                                    MediaQuery.devicePixelRatioOf(
+                                                                                      ctxImg,
+                                                                                    ))
+                                                                                .round(),
                                                                         errorBuilder:
                                                                             (
                                                                               c,
