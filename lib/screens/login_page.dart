@@ -1,9 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:gestion_piece_de_rechange/services/api_service.dart';
 import 'package:gestion_piece_de_rechange/screens/home_page.dart';
 import 'package:gestion_piece_de_rechange/utils/app_utils.dart';
 import 'package:gestion_piece_de_rechange/widgets/shared_widgets.dart';
 import 'package:gestion_piece_de_rechange/services/mlkit_translation_service.dart';
+import 'package:http/http.dart' as http;
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -111,41 +114,71 @@ class LoginPage extends StatelessWidget {
                       width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () async {
-                          final res = await login(
-                            emailCtrl.text,
-                            passCtrl.text,
-                          );
-                          if (res['success'] == true) {
-                            final token = res['token']?.toString() ?? '';
-                            final role =
-                                res['role']?.toString().toLowerCase() == 'admin'
-                                ? 'admin'
-                                : 'user';
-                            if (token.isEmpty) {
-                              if (!context.mounted) return;
+                          try {
+                            final res = await login(
+                              emailCtrl.text,
+                              passCtrl.text,
+                            );
+                            if (!context.mounted) return;
+                            if (res['success'] == true) {
+                              final token = res['token']?.toString() ?? '';
+                              final role =
+                                  res['role']?.toString().toLowerCase() ==
+                                      'admin'
+                                  ? 'admin'
+                                  : 'user';
+                              if (token.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Login response is missing a token.',
+                                    ),
+                                  ),
+                                );
+                                return;
+                              }
+                              Navigator.pushReplacement(
+                                context,
+                                createRoute(HomePage(role: role, token: token)),
+                              );
+                            } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Login response is missing a token.',
+                                SnackBar(
+                                  content: const TranslatedText(
+                                    'Login failed. Please check your credentials.',
+                                  ),
+                                  backgroundColor: STBG.danger,
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
                               );
-                              return;
                             }
-                            Navigator.pushReplacement(
-                              context,
-                              createRoute(HomePage(role: role, token: token)),
-                            );
-                          } else {
+                          } on http.ClientException {
+                            if (!context.mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const TranslatedText(
-                                  'Login failed. Please check your credentials.',
+                              const SnackBar(
+                                content: Text(
+                                  'Cannot reach the server. Check that your phone and computer are on the same Wi-Fi and the backend is running.',
                                 ),
-                                backgroundColor: STBG.danger,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                              ),
+                            );
+                          } on SocketException {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Cannot reach the server. Check that your phone and computer are on the same Wi-Fi and the backend is running.',
+                                ),
+                              ),
+                            );
+                          } on FormatException {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'The server returned an invalid response. Check the backend service.',
                                 ),
                               ),
                             );
