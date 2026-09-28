@@ -1,4 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:gestion_piece_de_rechange/config/api_config.dart';
+import 'package:gestion_piece_de_rechange/services/auth_headers.dart';
 import 'package:gestion_piece_de_rechange/utils/app_utils.dart';
 import 'package:gestion_piece_de_rechange/widgets/shared_widgets.dart';
 import 'package:gestion_piece_de_rechange/widgets/custom_bottom_navigation_bar.dart';
@@ -21,9 +26,64 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   final _searchController = TextEditingController();
+  late List<Map<String, dynamic>> _history;
   String _type = 'all';
   int _page = 0;
   static const int _pageSize = 25;
+
+  @override
+  void initState() {
+    super.initState();
+    _history = List<Map<String, dynamic>>.from(widget.history);
+    _loadServerHistory();
+  }
+
+  Future<void> _loadServerHistory() async {
+    final token = widget.token;
+    if (token == null || token.isEmpty) return;
+
+    try {
+      final response = await http.get(
+        Uri.parse(ApiConfig.url('/api/activities')),
+        headers: makeAuthHeaders(token),
+      );
+      if (response.statusCode != 200) {
+        debugPrint(
+          'Unable to load server history: HTTP ${response.statusCode}',
+        );
+        return;
+      }
+
+      final activities = jsonDecode(response.body);
+      if (activities is! List || !mounted) return;
+
+      final merged = <Map<String, dynamic>>[
+        for (final activity in activities)
+          if (activity is Map)
+            {
+              'reference': activity['reference'],
+              'takenBy': activity['taken_by'],
+              'quantity': activity['quantity'],
+              'date': activity['date'],
+            },
+        ..._history,
+      ];
+      final seen = <String>{};
+      final unique = merged.where((item) {
+        final key =
+            '${item['reference']}|${item['takenBy']}|'
+            '${item['quantity']}|${item['date']}';
+        return seen.add(key);
+      }).toList();
+
+      setState(() {
+        _history = unique;
+        _page = 0;
+      });
+    } catch (error) {
+      debugPrint('Unable to load server history: $error');
+    }
+  }
 
   @override
   void dispose() {
@@ -33,7 +93,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
   List<Map<String, dynamic>> get _visibleHistory {
     final query = _searchController.text.trim().toLowerCase();
-    final filtered = widget.history.where((h) {
+    final filtered = _history.where((h) {
       final action = h['action']?.toString();
       final matchesType =
           _type == 'all' ||

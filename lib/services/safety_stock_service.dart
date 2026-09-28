@@ -162,9 +162,14 @@ class SafetyStockService {
     required List activities,
     int periodDays = 90,
   }) {
+    final cutoff = DateTime.now().subtract(Duration(days: periodDays));
     // Consommation totale par référence
     final Map<String, double> totalConsumed = {};
     for (final a in activities) {
+      final activityDate = _parseActivityDate(a);
+      if (activityDate != null && activityDate.isBefore(cutoff)) {
+        continue;
+      }
       final rawReference =
           (a['reference'] ?? a['part_reference'] ?? a['piece_reference'] ?? '')
               .toString();
@@ -218,6 +223,12 @@ class SafetyStockService {
         mustOrder: mustOrder,
       );
     }).toList();
+  }
+
+  static DateTime? _parseActivityDate(Map activity) {
+    final rawDate = activity['date'] ?? activity['created_at'];
+    if (rawDate == null) return null;
+    return DateTime.tryParse(rawDate.toString())?.toLocal();
   }
 
   // Retourne uniquement les pièces qui nécessitent une commande.
